@@ -287,7 +287,7 @@ function openModal(svc){
           <div class="sicon">🔳</div><div>${it.label}</div><span class="go">Lihat ↗</span></a>`;
       }
       if(it.view==='tangmas'){
-        return `<a class="subtile" href="#" onclick="event.preventDefault();openTangmas();" onfocus="if(voiceMode) speak('${it.label}')" onmouseenter="if(voiceMode) speak('${it.label}')">
+        return `<a class="subtile" href="#" onclick="event.preventDefault();openTangmasQR();" onfocus="if(voiceMode) speak('${it.label}')" onmouseenter="if(voiceMode) speak('${it.label}')">
           <div class="sicon">📝</div><div>${it.label}</div><span class="go">Buka ↗</span></a>`;
       }
       if(it.view==='wabot'){
@@ -410,27 +410,12 @@ function openSosdiklih(){
   </div>`;
   if(voiceMode) speak('Permohonan Sosialisasi Pendidikan Pemilih. Pindai QR Code ini, atau kunjungi tautan s titik id garis miring permohonan sos diklih.');
 }
-function openTangmas(){
+function openTangmasQR(){
   document.getElementById('modalTitle').textContent = 'Tanggapan Masyarakat PDPB';
   const body = document.getElementById('modalBody');
   body.style.cssText = 'display:block;height:auto;';
   body.innerHTML = `<div class="wabot-view">
     <button type="button" class="back-btn" onclick="openModal(currentSvc)">← Kembali</button>
-    <div class="subgrid" style="grid-template-columns:repeat(2,1fr);">
-      <a class="subtile" href="${TANGMAS_FORM}" target="_blank" rel="noopener" onmouseenter="if(voiceMode) speak('Form Model A Tanggapan Masyarakat PDPB')">
-        <div class="sicon">📝</div><div>Form Model A-Tanggapan Masyarakat-PDPB</div><span class="go">Buka ↗</span></a>
-      <a class="subtile" href="#" onclick="event.preventDefault();openTangmasQR();" onmouseenter="if(voiceMode) speak('QR Code Form Model A Tanggapan Masyarakat PDPB')">
-        <div class="sicon">🔳</div><div>QR Code Form Model A-Tanggapan Masyarakat-PDPB</div><span class="go">Lihat ↗</span></a>
-    </div>
-  </div>`;
-  if(voiceMode) speak('Tanggapan Masyarakat PDPB. Pilihan: Form Model A Tanggapan Masyarakat PDPB, atau QR Code form.');
-}
-function openTangmasQR(){
-  document.getElementById('modalTitle').textContent = 'QR Code Form Model A-Tanggapan Masyarakat-PDPB';
-  const body = document.getElementById('modalBody');
-  body.style.cssText = 'display:block;height:auto;';
-  body.innerHTML = `<div class="wabot-view">
-    <button type="button" class="back-btn" onclick="openTangmas()">← Kembali</button>
     <div class="wabot-main">
       <div class="wabot-qr"><img src="${TANGMAS_QR}" alt="QR Code Form Model A-Tanggapan Masyarakat-PDPB"></div>
       <div class="wabot-text">
@@ -440,7 +425,7 @@ function openTangmasQR(){
       </div>
     </div>
   </div>`;
-  if(voiceMode) speak('Pindai QR Code ini, atau kunjungi tautan s titik id garis miring Tang Mas PDPB.');
+  if(voiceMode) speak('Tanggapan Masyarakat PDPB. Pindai QR Code ini, atau kunjungi tautan s titik id garis miring Tang Mas PDPB.');
 }
 function openWabot(){
   document.getElementById('modalTitle').textContent = 'WA Bot Pemilih';
