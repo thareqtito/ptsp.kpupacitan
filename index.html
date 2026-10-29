@@ -30,7 +30,6 @@ header>*{position:relative;z-index:1;}
 .hbtn.staff{background:rgba(240,201,135,.22);}
 .hbtn.staff.exit{background:#f0c987;color:#3b0a14;}
 .logo{cursor:default;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
-.logo.pressing{transition:transform 1.5s linear;transform:scale(.88);}
 #app.staff-mode header{box-shadow:inset 0 -4px 0 #f0c987;}
 .staff-chip{display:none;margin-left:10px;vertical-align:middle;background:#f0c987;color:#3b0a14;font-size:.42em;font-weight:800;padding:4px 10px;border-radius:999px;letter-spacing:.04em;text-shadow:none;}
 #app.staff-mode .staff-chip{display:inline-block;}
@@ -183,9 +182,6 @@ form.absen textarea{min-height:160px;resize:vertical;}
       <button class="hbtn" id="voiceToggle" aria-pressed="false">🔊 Mode Suara</button>
       <button class="hbtn" id="skmBtn">📊 SKM</button>
       <span id="staffBar" class="staff-bar" hidden>
-        <button class="hbtn staff" id="stAbsen">📋 Absensi</button>
-        <button class="hbtn staff" id="stMonitor">📈 Monitoring</button>
-        <button class="hbtn staff" id="stJadwal">🗓️ Jadwal</button>
         <button class="hbtn staff exit" id="stExit">🔒 Keluar</button>
       </span>
     </div>
@@ -297,8 +293,8 @@ function toast(msg){
 
 function renderGrid(){
   const grid = document.getElementById('grid');
-  const list = SERVICES;
-  grid.className = list.length > 8 ? 'rows5' : '';
+  const list = isStaff ? [JADWAL_ITEM, ABSEN_ITEM, MONITOR_ITEM] : SERVICES;
+  grid.className = isStaff ? 'staffgrid' : (list.length > 8 ? 'rows5' : '');
   grid.innerHTML = '';
   list.forEach((svc, idx)=>{
     const color = PALETTE[idx % PALETTE.length];
@@ -310,7 +306,7 @@ function renderGrid(){
     const iconHtml = svc.img ? `<img src="data:image/png;base64,${svc.img}" alt="" class="tile-icon-img">` : `<div class="icon">${svc.icon}</div>`;
     btn.innerHTML = `<button class="speak-btn" aria-label="Dengarkan ${svc.title}" onclick="event.stopPropagation();speak('${svc.title.replace(/'/g,"\\'")}')">🔊</button>
       <div class="icon-wrap">${iconHtml}</div><div class="label">${svc.title}</div><span class="tile-arrow" aria-hidden="true">→</span>`;
-    btn.addEventListener('click', ()=>openModal(svc));
+    btn.addEventListener('click', ()=>{ if(svc.form||svc.monitor||svc.schedule) openStaff(svc); else openModal(svc); });
     btn.addEventListener('focus', ()=>{ if(voiceMode) speak(svc.title); });
     btn.addEventListener('mouseenter', ()=>{ if(voiceMode) speak(svc.title); });
     grid.appendChild(btn);
@@ -395,7 +391,7 @@ function openInfo(key){
     <button type="button" class="back-btn" onclick="openModal(currentSvc)">← Kembali</button>
     <span class="zoom-hint">Ketuk gambar untuk memperbesar / memperkecil</span>
     <div class="std-wrap"><img id="stdImg" class="std-img has-cta" src="${d.img}" alt="Infografis ${d.title} KPU Kabupaten Pacitan"></div>
-    <div class="info-cta"><button type="button" class="print-btn print-main" onclick="printDoc('ppidb1')">🖨️ Cetak Formulir Permohonan Informasi (Model PPID-B)</button>${(isStaff && d.gen) ? `<a class="print-btn gen-btn" href="${d.gen}" target="_blank" rel="noopener">⚙️ Generate ${d.title} ↗</a>` : ''}</div>
+    <div class="info-cta"><button type="button" class="print-btn print-main" onclick="printDoc('ppidb1')">🖨️ Cetak Formulir Permohonan Informasi (Model PPID-B)</button>${d.gen ? `<a class="print-btn gen-btn" href="${d.gen}" target="_blank" rel="noopener">⚙️ Generate ${d.title} ↗</a>` : ''}</div>
   </div>`;
   document.getElementById('stdImg').addEventListener('click', function(){ this.classList.toggle('zoom'); });
   document.getElementById('modalBox').scrollTop = 0;
@@ -646,7 +642,7 @@ const SCHEDULE = {
   4:{Senin:['Yhony Agus Setya Mahendra','Threecia Agil Regitasari'],Selasa:['Thareq Tito Pratomo','Ivonni Tiahaq'],Rabu:['Handika Dwiyanto','Abdan Syakura'],Kamis:['Toni Cahyo Nugroho','Rikha Kusuma Wardani'],Jumat:['Daru Hajar Novianto','Reizya Gesleoda Axiaverona']},
   5:{Senin:['Suyudi','Edwin Reza Mardhani'],Selasa:['Rikha Kusuma Wardani','Wiby Eka Santoso'],Rabu:['Threecia Agil Regitasari','Ivonni Tiahaq'],Kamis:['Yhony Agus Setya Mahendra','Reizya Gesleoda Axiaverona'],Jumat:['Daru Hajar Novianto','Muhammad Haidar Ali']}
 };
-CONFIG.PETUGAS_PIN = '1234'; // PIN masuk Mode Petugas — silakan ganti
+CONFIG.PETUGAS_PIN = '3501'; // PIN masuk Mode Petugas — silakan ganti
 CONFIG.STAFF_IDLE_MS = 3*60*1000; // otomatis kembali ke Mode Pemohon setelah 3 menit tanpa aktivitas
 
 function openStaff(item){
@@ -665,9 +661,10 @@ function setStaffMode(on){
   document.getElementById('app').classList.toggle('staff-mode', on);
   document.getElementById('staffBar').hidden = !on;
   document.querySelector('footer').textContent = on
-    ? 'Mode Petugas — Absensi, Monitoring & Jadwal Piket di kanan atas · tombol Generate tersedia di sub menu Model A · tekan 🔒 Keluar setelah selesai'
+    ? 'Mode Petugas — pilih Jadwal Piket, Absensi Piket, atau Monitoring Absensi · tekan 🔒 Keluar setelah selesai'
     : FOOTER_PEMOHON;
   closeModal();
+  renderGrid();
   if(on){ resetStaffIdle(); toast('Mode Petugas aktif'); }
   else { clearTimeout(resetStaffIdle._t); toast('Kembali ke Mode Pemohon'); }
 }
@@ -695,25 +692,13 @@ function openPinPrompt(){
     else { inp.value=''; inp.focus(); toast('PIN salah.'); }
   });
 }
-// Pemicu tersembunyi: tekan lama logo KPU (±1,5 detik) atau ketuk logo 5x berturut-turut
+// Pemicu tersembunyi: ketuk logo KPU 1x untuk masuk Mode Petugas (dengan PIN)
 (function(){
   const logo = document.querySelector('header .logo');
   logo.setAttribute('draggable','false');
-  let t=null, taps=0, tapT=null;
-  const trigger = ()=>{ logo.classList.remove('pressing'); if(isStaff) return; openPinPrompt(); };
-  const start = e=>{ clearTimeout(t); logo.classList.add('pressing'); t=setTimeout(()=>{ t=null; trigger(); }, 1500); };
-  const cancel = ()=>{ if(t){ clearTimeout(t); t=null; } logo.classList.remove('pressing'); };
-  logo.addEventListener('pointerdown', start);
-  ['pointerup','pointerleave','pointercancel'].forEach(ev=>logo.addEventListener(ev, cancel));
   logo.addEventListener('contextmenu', e=>e.preventDefault());
-  logo.addEventListener('click', ()=>{
-    taps++; clearTimeout(tapT); tapT=setTimeout(()=>taps=0, 1200);
-    if(taps>=5){ taps=0; trigger(); }
-  });
+  logo.addEventListener('click', ()=>{ if(!isStaff) openPinPrompt(); });
 })();
-document.getElementById('stAbsen').addEventListener('click', ()=>openStaff(ABSEN_ITEM));
-document.getElementById('stMonitor').addEventListener('click', ()=>openStaff(MONITOR_ITEM));
-document.getElementById('stJadwal').addEventListener('click', ()=>openStaff(JADWAL_ITEM));
 document.getElementById('stExit').addEventListener('click', ()=>setStaffMode(false));
 function absenFormHTML(){
   const now = new Date();
