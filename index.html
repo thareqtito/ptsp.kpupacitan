@@ -105,6 +105,28 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
 #printArea,#printReport{display:none;}
+.qbar{flex:0 0 auto;display:flex;align-items:stretch;gap:1.2vw;margin:1.4vh 3vw 0;padding:.9vh 1.2vw;background:rgba(255,255,255,.9);border:1.5px solid rgba(155,28,49,.18);border-left:8px solid var(--red);border-radius:16px;box-shadow:0 4px 14px rgba(90,15,31,.12);}
+.qbar[hidden]{display:none;}
+.qbar .qb-item{display:flex;align-items:baseline;gap:10px;padding:0 1.2vw;border-right:1px solid #eadde0;min-width:0;flex:1 1 0;}
+.qbar .qb-item.fix{flex:0 0 auto;}
+.qbar .qb-item.fix .qb-s{overflow:visible;}
+.qbar .qb-item:last-of-type{border-right:none;}
+.qbar .qb-l{font-size:clamp(11px,1.45vh,14px);font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
+.qbar .qb-v{font-size:clamp(22px,3.6vh,36px);font-weight:900;color:var(--red);line-height:1.1;}
+.qbar .qb-item.main .qb-v{color:#fff;background:linear-gradient(150deg,var(--red),var(--navy));padding:0 14px;border-radius:10px;}
+.qbar .qb-s{font-size:clamp(12px,1.6vh,15px);font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.qbar .qb-status{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap;}
+.qb-dot{width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block;}
+.qb-dot.on{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.2);}
+.qbar.off .qb-v{opacity:.55;}
+@media (max-width:900px){.qbar{flex-wrap:wrap}.qbar .qb-item{border-right:none}}
+.aq-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fbf3f5;border:1px dashed #e0c4ca;border-radius:12px;padding:8px 10px;}
+.aq-pick>span{font-size:12px;font-weight:800;color:var(--sub);margin-right:4px;}
+.aq-chip{border:1.5px solid #e0c4ca;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
+.aq-chip b{color:var(--red);}
+.aq-chip.on{border-color:var(--gold);background:#fff7e3;}
+.aq-chip.sel{background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;border-color:var(--gold);} .aq-chip.sel b{color:#fff;}
+
 .voice-fab{position:fixed;right:16px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:45;width:48px;height:48px;border-radius:50%;border:3px solid #f0c987;background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;}
 .voice-fab:hover,.voice-fab:focus-visible{transform:scale(1.06);outline:3px solid var(--gold);}
 .voice-fab.active{background:#f0c987;border-color:var(--red);color:#3b0a14;box-shadow:0 0 0 6px rgba(240,201,135,.45),0 8px 22px rgba(0,0,0,.3);}
@@ -121,6 +143,8 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 #absenAlert .aa-later{background:#f6e6e9;color:#7a1428;border:none;border-radius:10px;padding:7px 12px;font-weight:700;font-size:12px;cursor:pointer;}
 @media print{#absenAlert{display:none !important;}}
 
+#hadirForm{gap:8px;}
+#hadirForm input,#hadirForm select,#hadirForm textarea{padding:8px 10px;}
 .hadir-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:2vw;align-items:start;}
 @media (max-width:900px){.hadir-wrap{grid-template-columns:1fr;}}
 .hadir-side{background:#fbf3f5;border:1px solid #eadde0;border-radius:14px;padding:14px;}
@@ -246,6 +270,7 @@ form.absen textarea{min-height:160px;resize:vertical;}
       </span>
     </div>
   </header>
+  <div id="queueBar" class="qbar" hidden aria-live="polite"></div>
   <main id="grid" role="list"></main>
   <footer>Sentuh salah satu menu untuk melihat layanan &middot; Gunakan tombol 🔊 pada setiap menu untuk mendengarkan pilihan</footer>
 </div>
@@ -1036,7 +1061,7 @@ function saveLocalLog(data){
 /* ================= BUKU DAFTAR HADIR PEMOHON / PENERIMA LAYANAN ================= */
 // URL Web App Apps Script "Daftar Hadir PTSP" (lihat Code_DaftarHadir.gs), berakhiran /exec.
 // Boleh diisi DI SINI, atau di objek CONFIG paling atas (HADIR_WEBHOOK_URL: "..."). Keduanya berfungsi.
-CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || 'https://script.google.com/macros/s/AKfycbzGOvQeUa80rLz1w9vXpTFjSe3DFempIvjz2fu7d3GAp3WO72PmZNY1ppPodlmsmcM4/exec';
+CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || 'https://script.google.com/macros/s/AKfycbzYsWxfvcFA4EjaZ34uFk7ijwJPuYcLZBAdMJ9edDh-nd7u-APX-gqLoo1QHw-8GQ99/exec';
 const HADIR_ITEM = {icon:'🧾', title:'Daftar Hadir Pemohon', hadir:true};
 const REKAP_ITEM = {icon:'📚', title:'Rekap Daftar Hadir Pemohon', rekap:true};
 document.getElementById('hadirBtn').addEventListener('click', ()=>openStaff(HADIR_ITEM));
@@ -1128,7 +1153,7 @@ function petugasForDate(iso, absenAll){
 async function openHadir(){
   const body = document.getElementById('modalBody');
   body.innerHTML = '<p style="text-align:center;padding:4vh 0;">Memuat daftar hadir...</p>';
-  const all = await loadHadir();
+  const [all] = await Promise.all([loadHadir(), pollAntrean()]);
   renderHadir(all);
 }
 function renderHadir(all){
@@ -1136,7 +1161,10 @@ function renderHadir(all){
   const today = isoDate(new Date());
   const todays = all.filter(r=>r.tanggal===today).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
   const pending = all.filter(r=>!r.status).sort((a,b)=> (a.tanggal+a.noAntrian).localeCompare(b.tanggal+b.noAntrian));
-  const nextNo = pad3(todays.reduce((m,r)=>Math.max(m, parseInt(r.noAntrian,10)||0), 0) + 1);
+  const kandidat = antreanKandidat(todays);
+  const tiketDefault = kandidat[0] || null;
+  const nextNo = tiketDefault ? tiketDefault.kode : pad3(todays.reduce((m,r)=>Math.max(m, parseInt(r.noAntrian,10)||0), 0) + 1);
+  const jenisDefault = tiketDefault ? jenisDariKode(tiketDefault.k) : '';
   const offline = !CONFIG.HADIR_WEBHOOK_URL ? `<div class="hadir-warn">⚠️ URL spreadsheet Daftar Hadir belum diatur — data hanya tersimpan di perangkat ini.</div>` : '';
   let top;
   if(pending.length){
@@ -1165,14 +1193,15 @@ function renderHadir(all){
         <div><label>Hari, Tanggal</label><input type="text" value="${esc(tglPanjang(today))}" readonly></div>
         <div style="max-width:220px"><label>No. Urut Antrian</label><input type="text" id="hNo" inputmode="numeric" maxlength="3" value="${nextNo}" required></div>
       </div>
+      ${kandidat.length ? `<div class="aq-pick"><span>Dari antrean:</span>${kandidat.slice(0,8).map(t=>`<button type="button" class="aq-chip ${t.status==='dipanggil'?'on':''} ${t===tiketDefault?'sel':''}" data-kode="${esc(t.kode)}" data-jenis="${esc(jenisDariKode(t.k))}"><b>${esc(t.kode)}</b> ${esc((jenisDariKode(t.k)||t.layanan).replace('Layanan ',''))}${t.status==='dipanggil'?' · dipanggil':''}</button>`).join('')}</div>` : ''}
       <div><label>Nama Lengkap</label><input type="text" id="hNama" required></div>
-      <div><label>Alamat</label><textarea id="hAlamat" style="min-height:64px" required></textarea></div>
+      <div><label>Alamat</label><textarea id="hAlamat" rows="2" style="min-height:44px" required></textarea></div>
       <div class="row2">
         <div><label>No. WhatsApp</label><input type="tel" id="hWa" inputmode="tel" placeholder="08xxxxxxxxxx" required></div>
         <div><label>Email</label><input type="email" id="hEmail" placeholder="nama@email.com (opsional)"></div>
       </div>
-      <div><label>Jenis Layanan</label><select id="hJenis" required><option value="">— Pilih jenis layanan —</option>${JENIS_LAYANAN.map(j=>`<option>${esc(j)}</option>`).join('')}</select></div>
-      <div><label>Keperluan</label><textarea id="hKeperluan" style="min-height:80px" required placeholder="Tuliskan keperluan pemohon..."></textarea></div>
+      <div><label>Jenis Layanan</label><select id="hJenis" required><option value="">— Pilih jenis layanan —</option>${JENIS_LAYANAN.map(j=>`<option ${j===jenisDefault?'selected':''}>${esc(j)}</option>`).join('')}</select></div>
+      <div><label>Keperluan</label><textarea id="hKeperluan" rows="2" style="min-height:54px" required placeholder="Tuliskan keperluan pemohon..."></textarea></div>
       <div class="hadir-note">ℹ️ Status Pelayanan diisi setelah pelayanan pemohon ini selesai.</div>
       <button type="submit" class="submit-btn" id="hSubmit">Simpan &amp; Mulai Layani</button>
     </form>`;
@@ -1187,6 +1216,11 @@ function renderHadir(all){
 function bindHadirForm(todays){
   const f=document.getElementById('hadirForm');
   const no=document.getElementById('hNo');
+  f.querySelectorAll('.aq-chip').forEach(b=>b.addEventListener('click', ()=>{
+    no.value = b.dataset.kode; if(b.dataset.jenis) document.getElementById('hJenis').value = b.dataset.jenis;
+    f.querySelectorAll('.aq-chip').forEach(x=>x.classList.toggle('sel', x===b));
+    document.getElementById('hNama').focus();
+  }));
   no.addEventListener('input', ()=>{ no.value = no.value.replace(/\D/g,'').slice(0,3); });
   no.addEventListener('blur', ()=>{ if(no.value) no.value = pad3(parseInt(no.value,10)||0); });
   f.addEventListener('submit', async e=>{
@@ -1203,6 +1237,7 @@ function bindHadirForm(todays){
       jenisLayanan: document.getElementById('hJenis').value, keperluan: document.getElementById('hKeperluan').value.trim(),
       status:'', keterangan:'', waktuDaftar: jamSekarang(), waktuSelesai:'' };
     const where = await saveHadir(rec);
+    antreanCmd(noVal, 'dipanggil');
     toast(where==='server' ? `Pemohon No. ${noVal} tercatat.` : `Pemohon No. ${noVal} tersimpan di perangkat (akan dikirim saat koneksi tersedia).`);
     renderHadir(hadirLocal().map(normHadir));
   });
@@ -1222,6 +1257,7 @@ function bindStatusForm(p){
     const btn=f.querySelector('button[type=submit]'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
     const rec = Object.assign({}, p, {status: st.value, keterangan: st.value==='Lainnya' ? ket.value.trim() : '', waktuSelesai: jamSekarang()});
     const where = await saveHadir(rec);
+    if(p.tanggal === isoDate(new Date())) antreanCmd(p.noAntrian, 'selesai');
     toast(where==='server' ? `Status pelayanan No. ${p.noAntrian} tersimpan.` : `Status No. ${p.noAntrian} tersimpan di perangkat (akan dikirim saat koneksi tersedia).`);
     renderHadir(hadirLocal().map(normHadir));
   });
@@ -1489,6 +1525,98 @@ async function checkAbsenReminder(){
 }
 setInterval(checkAbsenReminder, 60*1000);
 setTimeout(checkAbsenReminder, 3000);
+
+/* ================= ANTREAN REAL-TIME (server antrean resepsionis -> Firebase Realtime Database) ================= */
+// URL Firebase Realtime Database (tanpa garis miring di akhir), mis. https://nama-proyek-default-rtdb.asia-southeast1.firebasedatabase.app
+CONFIG.FIREBASE_URL = (CONFIG.FIREBASE_URL || '').trim() || 'https://antreantiket-default-rtdb.asia-southeast1.firebasedatabase.app';
+// Nama folder data antrean — harus SAMA dengan firebasePath di pengaturan.json server antrean & Rules Firebase
+CONFIG.FIREBASE_PATH = (CONFIG.FIREBASE_PATH || '').trim() || 'antrean_kgluzdqtzsveio62';
+const ANTREAN = {data:null, state:null, es:null, open:false, hbLokal:0};
+const ANTREAN_HURUF = 'ABCDEFGH'; // urutan kode layanan di aplikasi antrean = urutan menu PTSP
+function jenisDariKode(k){ const i=ANTREAN_HURUF.indexOf(String(k||'').toUpperCase()); return i>=0 ? JENIS_LAYANAN[i] : ''; }
+function fbUrl(sub){ return CONFIG.FIREBASE_URL.replace(/\/+$/,'') + '/' + CONFIG.FIREBASE_PATH + sub + '.json'; }
+function antreanHariIni(){ return !!(ANTREAN.state && ANTREAN.state.hari === isoDate(new Date())); }
+function antreanTiket(){ return antreanHariIni() ? ANTREAN.state.tickets.slice().sort((a,b)=>(parseInt(a.kode,10)||0)-(parseInt(b.kode,10)||0)) : []; }
+function antreanTerhubung(){
+  const hb = ANTREAN.data && ANTREAN.data.hb;
+  const segar = (Date.now() - ANTREAN.hbLokal < 45000) || (typeof hb === 'number' && Math.abs(Date.now() - hb) < 45000);
+  return ANTREAN.open && segar;
+}
+function antreanKandidat(todays){
+  const used = new Set(todays.map(r=>r.noAntrian));
+  const t = antreanTiket().filter(x=>!used.has(x.kode) && x.status!=='selesai');
+  return t.filter(x=>x.status==='dipanggil').concat(t.filter(x=>x.status==='menunggu'));
+}
+function fbTerapkan(root, path, data){
+  const parts = String(path||'/').split('/').filter(Boolean);
+  if(!parts.length) return data;
+  root = (root && typeof root==='object') ? root : {};
+  let o = root;
+  for(let i=0;i<parts.length-1;i++){ if(!o[parts[i]] || typeof o[parts[i]]!=='object') o[parts[i]] = {}; o = o[parts[i]]; }
+  const last = parts[parts.length-1];
+  if(data===null) delete o[last]; else o[last] = data;
+  return root;
+}
+function antreanSusun(){
+  const d = ANTREAN.data || {}, st = d.state;
+  if(!st || !st.hari){ ANTREAN.state = null; return; }
+  const tickets = Object.entries(st.tickets || {}).map(([kode,t])=>Object.assign({kode}, t));
+  // perintah PTSP yang belum diterapkan server langsung tercermin di tampilan
+  Object.values(d.cmds || {}).forEach(c=>{ const t=tickets.find(x=>x.kode===String(c && c.kode)); if(t && c.status) t.status=c.status; });
+  ANTREAN.state = {hari: st.hari, tickets};
+}
+function antreanSambung(){
+  if(!CONFIG.FIREBASE_URL || typeof EventSource==='undefined') return renderAntreanBar();
+  if(ANTREAN.es) try{ ANTREAN.es.close(); }catch(e){}
+  const es = new EventSource(fbUrl(''));
+  ANTREAN.es = es;
+  const terima = (ev, patch) => {
+    let m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
+    if(!m) return;
+    if(patch && m.data && typeof m.data==='object') Object.entries(m.data).forEach(([k,v])=>{ ANTREAN.data = fbTerapkan(ANTREAN.data, (m.path==='/'?'':m.path)+'/'+k, v); });
+    else ANTREAN.data = fbTerapkan(ANTREAN.data, m.path, m.data);
+    if(String(m.path).startsWith('/hb') || (m.path==='/' && m.data && m.data.hb) || (m.data && typeof m.data==='object' && 'hb' in m.data)) ANTREAN.hbLokal = Date.now();
+    ANTREAN.open = true;
+    antreanSusun(); renderAntreanBar();
+  };
+  es.addEventListener('put', ev=>terima(ev,false));
+  es.addEventListener('patch', ev=>terima(ev,true));
+  es.addEventListener('keep-alive', ()=>{ ANTREAN.open = true; });
+  es.addEventListener('open', ()=>{ ANTREAN.open = true; renderAntreanBar(); });
+  es.addEventListener('error', ()=>{ ANTREAN.open = (es.readyState === 1); renderAntreanBar(); });
+  es.addEventListener('cancel', ()=>{ ANTREAN.open = false; renderAntreanBar(); });
+}
+// dipanggil saat membuka Daftar Hadir: data real-time sudah tersedia, cukup kembalikan
+function pollAntrean(){ return Promise.resolve(); }
+async function antreanCmd(kode, status){
+  if(!CONFIG.FIREBASE_URL) return;
+  const t = antreanTiket().find(x=>x.kode===kode);
+  if(!t || t.status===status) return;
+  t.status = status; renderAntreanBar();
+  try{ await fetch(fbUrl('/cmds'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({kode, status, ts:{'.sv':'timestamp'}})}); }catch(e){}
+}
+function renderAntreanBar(){
+  const bar = document.getElementById('queueBar');
+  if(!CONFIG.FIREBASE_URL){ bar.hidden = true; return; }
+  bar.hidden = false;
+  const on = antreanTerhubung();
+  const tk = antreanTiket();
+  const dilayani = tk.filter(x=>x.status==='dipanggil');
+  const menunggu = tk.filter(x=>x.status==='menunggu');
+  const berikut = menunggu[0];
+  const hb = ANTREAN.data && ANTREAN.data.hb;
+  const jam = typeof hb==='number' ? new Date(hb).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':') : '';
+  const status = on ? `<span class="qb-dot on"></span>Real-time` : `<span class="qb-dot"></span>${ANTREAN.state ? 'Server antrean tidak terhubung' + (jam?' · '+jam:'') : 'Server antrean belum terhubung'}`;
+  const lay = t => esc((jenisDariKode(t.k)||t.layanan||'').replace('Layanan ',''));
+  bar.classList.toggle('off', !on);
+  bar.innerHTML = `
+    <div class="qb-item main"><span class="qb-l">Sedang Dilayani</span><span class="qb-v">${dilayani.length ? dilayani.map(t=>`<b>${esc(t.kode)}</b>`).join(' ') : '—'}</span>${dilayani.length===1?`<span class="qb-s">${lay(dilayani[0])}</span>`:''}</div>
+    <div class="qb-item"><span class="qb-l">Berikutnya</span><span class="qb-v">${berikut ? `<b>${esc(berikut.kode)}</b>` : '—'}</span>${berikut?`<span class="qb-s">${lay(berikut)}</span>`:''}</div>
+    <div class="qb-item fix"><span class="qb-l">Jumlah Antrean</span><span class="qb-v"><b>${tk.length}</b></span><span class="qb-s">${menunggu.length} menunggu</span></div>
+    <div class="qb-status">${status}</div>`;
+}
+setInterval(()=>{ renderAntreanBar(); if(ANTREAN.es && ANTREAN.es.readyState===2) antreanSambung(); }, 5000);
+antreanSambung();
 
 renderGrid();
 </script>
