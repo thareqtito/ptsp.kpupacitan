@@ -1897,7 +1897,7 @@
       if (voiceMode) speak('Mode suara aktif. Arahkan ke menu untuk mendengarkan pilihan.');
     });
 
-    const CONFIG = { SHEET_WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbzGOvQeUa80rLz1w9vXpTFjSe3DFempIvjz2fu7d3GAp3WO72PmZNY1ppPodlmsmcM4/exec" }; // URL Web App Google Apps Script (doPost utk kirim absensi, doGet?action=list utk Monitoring)
+    const CONFIG = { SHEET_WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbyqnQuPTISXLBjLTorP2pT12e4eDjw_h2jxlmaQWAYNjccLeMhvZujB_xmh4pdElrQq/exec" }; // URL Web App Google Apps Script (doPost utk kirim absensi, doGet?action=list utk Monitoring)
     const ABSEN_ITEM = { icon: '📋', title: 'Absensi Piket', form: true };
     const MONITOR_ITEM = { icon: '📊', title: 'Monitoring Absensi', monitor: true };
     const JADWAL_ITEM = { icon: '🗓️', title: 'Jadwal Piket', schedule: true };
@@ -2211,7 +2211,7 @@
     }
 
     /* ================= BUKU DAFTAR HADIR PEMOHON / PENERIMA LAYANAN ================= */
-    CONFIG.HADIR_WEBHOOK_URL = ''; // URL Web App Apps Script "Daftar Hadir PTSP" (lihat Code_DaftarHadir.gs). Kosong = simpan lokal di perangkat ini saja.
+    CONFIG.HADIR_WEBHOOK_URL = 'https://script.google.com/macros/s/AKfycbzGOvQeUa80rLz1w9vXpTFjSe3DFempIvjz2fu7d3GAp3WO72PmZNY1ppPodlmsmcM4/exec'; // URL Web App Apps Script "Daftar Hadir PTSP" (lihat Code_DaftarHadir.gs). Kosong = simpan lokal di perangkat ini saja.
     const HADIR_ITEM = { icon: '🧾', title: 'Daftar Hadir Pemohon', hadir: true };
     const REKAP_ITEM = { icon: '📚', title: 'Rekap Daftar Hadir', rekap: true };
     document.getElementById('hadirBtn').addEventListener('click', () => openStaff(HADIR_ITEM));
