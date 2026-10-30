@@ -24,11 +24,9 @@ header>*{position:relative;z-index:1;}
 .title-wrap{flex:1;min-width:0;}
 .title-wrap h1{margin:0;font-size:clamp(18px,3vh,32px);font-weight:800;line-height:1.25;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.25);}
 .title-wrap span{display:block;font-weight:700;font-size:0.8em;color:#f6d995;margin-top:2px;}
-.header-controls{display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end;}
-.staff-bar{display:contents;}
-.staff-bar[hidden]{display:none;}
+.header-controls{display:flex;gap:8px;flex:0 1 auto;flex-wrap:wrap;justify-content:flex-end;align-items:center;}
 .hbtn.hadir-top{background:#f0c987;color:#3b0a14;}
-#app.staff-mode #hadirBtn{display:none;}
+#app.staff-mode #hadirBtn,#app.staff-mode #skmBtn{display:none;}
 .hbtn.staff{background:rgba(240,201,135,.22);}
 .hbtn.staff.exit{background:#f0c987;color:#3b0a14;}
 .logo{cursor:default;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;-webkit-user-drag:none;}
@@ -105,21 +103,57 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
 #printArea,#printReport{display:none;}
-.qbar{flex:0 0 auto;display:flex;align-items:stretch;gap:1.2vw;margin:1.4vh 3vw 0;padding:.9vh 1.2vw;background:rgba(255,255,255,.9);border:1.5px solid rgba(155,28,49,.18);border-left:8px solid var(--red);border-radius:16px;box-shadow:0 4px 14px rgba(90,15,31,.12);}
-.qbar[hidden]{display:none;}
-.qbar .qb-item{display:flex;align-items:baseline;gap:10px;padding:0 1.2vw;border-right:1px solid #eadde0;min-width:0;flex:1 1 0;}
-.qbar .qb-item.fix{flex:0 0 auto;}
-.qbar .qb-item.fix .qb-s{overflow:visible;}
-.qbar .qb-item:last-of-type{border-right:none;}
-.qbar .qb-l{font-size:clamp(11px,1.45vh,14px);font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;}
-.qbar .qb-v{font-size:clamp(22px,3.6vh,36px);font-weight:900;color:var(--red);line-height:1.1;}
-.qbar .qb-item.main .qb-v{color:#fff;background:linear-gradient(150deg,var(--red),var(--navy));padding:0 14px;border-radius:10px;}
-.qbar .qb-s{font-size:clamp(12px,1.6vh,15px);font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.qbar .qb-status{margin-left:auto;flex:0 0 auto;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap;}
-.qb-dot{width:10px;height:10px;border-radius:50%;background:#9ca3af;display:inline-block;}
-.qb-dot.on{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.2);}
-.qbar.off .qb-v{opacity:.55;}
-@media (max-width:900px){.qbar{flex-wrap:wrap}.qbar .qb-item{border-right:none}}
+.jd-bar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.jd-nav{display:flex;align-items:center;gap:8px;}
+.jd-btn{width:40px;height:40px;border-radius:50%;border:2px solid var(--gold);background:#fff;color:var(--red);font-size:24px;font-weight:800;line-height:1;cursor:pointer;}
+.jd-btn:hover{background:var(--gold);}
+.jd-title{min-width:190px;text-align:center;font-size:clamp(20px,2.8vh,26px);font-weight:900;color:var(--red);}
+.jd-today-btn{background:var(--gold);border:none;border-radius:999px;padding:9px 16px;font-weight:800;color:#3b0a14;cursor:pointer;margin-left:6px;}
+.jd-find{display:flex;align-items:center;gap:8px;font-weight:700;color:var(--sub);font-size:14px;}
+.jd-find select{padding:9px 12px;border-radius:10px;border:1px solid #e0c4ca;font-size:14px;font-weight:600;max-width:280px;}
+.jd-hero{display:flex;align-items:center;gap:20px;flex-wrap:wrap;background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;border-radius:16px;padding:14px 20px;margin-bottom:14px;border-bottom:4px solid var(--gold);}
+.jd-hero.off{background:#f6e6e9;color:var(--text);}
+.jd-hero-l{display:flex;flex-direction:column;}
+.jd-hero-l span{font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#f6d995;}
+.jd-hero.off .jd-hero-l span{color:var(--sub);}
+.jd-hero-l b{font-size:clamp(17px,2.3vh,21px);}
+.jd-hero-l em{font-style:normal;font-weight:800;color:#f6d995;font-size:14px;}
+.jd-hero-names{display:flex;gap:12px;flex-wrap:wrap;margin-left:auto;}
+.jd-person{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.14);border:1.5px solid rgba(240,201,135,.6);border-radius:999px;padding:6px 16px 6px 6px;font-size:clamp(16px,2.2vh,20px);font-weight:800;}
+.jd-person i{font-style:normal;width:36px;height:36px;border-radius:50%;background:#f0c987;color:#3b0a14;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:900;}
+.jd-grid{display:grid;grid-template-columns:132px repeat(5,minmax(0,1fr));gap:6px;}
+.jd-h{text-align:center;font-weight:800;color:#fff;background:linear-gradient(150deg,var(--red),var(--navy));border-radius:10px;padding:8px 4px;font-size:clamp(14px,1.8vh,16px);}
+.jd-h:first-child{background:none;}
+.jd-week{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:4px;padding:8px 10px;background:#fbf3f5;border-radius:12px;border-left:5px solid var(--gold);}
+.jd-shift{font-weight:900;color:var(--red);font-size:clamp(16px,2.1vh,19px);}
+.jd-range{font-size:12.5px;font-weight:700;color:var(--sub);}
+.jd-day{background:#fff;border:1.5px solid #eadde0;border-radius:12px;padding:8px 10px;display:flex;flex-direction:column;gap:5px;min-height:96px;}
+.jd-day.out{opacity:.38;}
+.jd-day.past{background:#fcfafa;}
+.jd-day.past .jd-name{opacity:.75;}
+.jd-day.today{border:3px solid var(--gold);box-shadow:0 6px 16px rgba(226,180,79,.35);background:#fffaf0;}
+.jd-day.hit{background:#fff4dc;border-color:var(--gold);}
+.jd-day.dim{opacity:.35;}
+.jd-date{font-size:clamp(20px,2.8vh,26px);font-weight:900;color:var(--red);line-height:1;display:flex;align-items:center;gap:8px;}
+.jd-date span{font-size:11px;font-weight:800;background:var(--gold);color:#3b0a14;border-radius:999px;padding:3px 8px;}
+.jd-name{display:flex;align-items:center;gap:7px;font-size:clamp(14px,1.85vh,16.5px);font-weight:700;color:var(--text);line-height:1.2;}
+.jd-name i{font-style:normal;flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:#f6e6e9;color:#7a1428;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:900;}
+.jd-name.me{color:var(--red);font-weight:900;}
+.jd-name.me i{background:var(--red);color:#fff;}
+.jd-note{margin-top:10px;font-size:13px;font-weight:600;color:var(--sub);}
+@media (max-width:760px){.jd-grid{grid-template-columns:1fr}.jd-h{display:none}.jd-day.out{display:none}}
+
+.qhead{display:flex;align-items:stretch;gap:2px;background:rgba(0,0,0,.22);border:1.5px solid rgba(240,201,135,.55);border-radius:14px;padding:4px 6px;color:#fff;}
+.qhead[hidden]{display:none;}
+.qhead .qh-item{display:flex;flex-direction:column;justify-content:center;align-items:center;padding:0 10px;min-width:58px;border-right:1px solid rgba(240,201,135,.3);}
+.qhead .qh-l{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#f6d995;white-space:nowrap;line-height:1.2;}
+.qhead .qh-v{font-size:clamp(16px,2.4vh,22px);font-weight:900;line-height:1.1;white-space:nowrap;}
+.qhead .qh-v small{font-size:11px;font-weight:700;color:#f6d995;margin-left:3px;}
+.qhead .qh-item.main .qh-v{background:#f0c987;color:#3b0a14;border-radius:7px;padding:0 8px;}
+.qhead .qh-status{display:flex;align-items:center;gap:5px;padding:0 4px 0 10px;font-size:11px;font-weight:700;color:#f6d995;white-space:nowrap;}
+.qb-dot{width:9px;height:9px;border-radius:50%;background:#9ca3af;display:inline-block;flex:0 0 auto;}
+.qb-dot.on{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.3);}
+.qhead.off .qh-v{opacity:.55;}
 .aq-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fbf3f5;border:1px dashed #e0c4ca;border-radius:12px;padding:8px 10px;}
 .aq-pick>span{font-size:12px;font-weight:800;color:var(--sub);margin-right:4px;}
 .aq-chip{border:1.5px solid #e0c4ca;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
@@ -263,14 +297,11 @@ form.absen textarea{min-height:160px;resize:vertical;}
       <h1>Pelayanan Publik Terintegrasi Satu Pintu<span>KPU Kabupaten Pacitan <b class="staff-chip">MODE PETUGAS</b></span></h1>
     </div>
     <div class="header-controls">
+      <div id="queueBar" class="qhead" hidden aria-live="polite"></div>
       <button class="hbtn hadir-top" id="hadirBtn">🧾 Daftar Hadir</button>
       <button class="hbtn" id="skmBtn">📊 SKM</button>
-      <span id="staffBar" class="staff-bar" hidden>
-        <button class="hbtn staff exit" id="stExit">🔒 Keluar</button>
-      </span>
     </div>
   </header>
-  <div id="queueBar" class="qbar" hidden aria-live="polite"></div>
   <main id="grid" role="list"></main>
   <footer>Sentuh salah satu menu untuk melihat layanan &middot; Gunakan tombol 🔊 pada setiap menu untuk mendengarkan pilihan</footer>
 </div>
@@ -748,9 +779,8 @@ const FOOTER_PEMOHON = document.querySelector('footer').textContent;
 function setStaffMode(on){
   isStaff = on;
   document.getElementById('app').classList.toggle('staff-mode', on);
-  document.getElementById('staffBar').hidden = !on;
   document.querySelector('footer').textContent = on
-    ? 'Mode Petugas — Rekap Daftar Hadir Pemohon & laporan harian (Word/PDF di Monitoring Absensi) · tekan 🔒 Keluar setelah selesai'
+    ? 'Mode Petugas — Rekap Daftar Hadir Pemohon & laporan harian (Word/PDF di Monitoring Absensi) · ketuk logo KPU untuk kembali ke Mode Pemohon'
     : FOOTER_PEMOHON;
   closeModal();
   renderGrid();
@@ -786,9 +816,8 @@ function openPinPrompt(){
   const logo = document.querySelector('header .logo');
   logo.setAttribute('draggable','false');
   logo.addEventListener('contextmenu', e=>e.preventDefault());
-  logo.addEventListener('click', ()=>{ if(!isStaff) openPinPrompt(); });
+  logo.addEventListener('click', ()=>{ if(isStaff) setStaffMode(false); else openPinPrompt(); });
 })();
-document.getElementById('stExit').addEventListener('click', ()=>setStaffMode(false));
 function absenFormHTML(){
   const now = new Date();
   const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
@@ -931,48 +960,64 @@ function getShiftForDate(date){
 }
 const MONTHS_ID=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 function jadwalHTML(){
-  const monthOpts = MONTHS_ID.map((m,i)=>`<option value="${i}" ${i===9?'selected':''}>${m}</option>`).join('');
-  const yearOpts = [2026,2027,2028].map(y=>`<option value="${y}" ${y===2026?'selected':''}>${y}</option>`).join('');
-  return `<div class="monitor-controls">
-    <label>Bulan:</label><select id="jMonth">${monthOpts}</select>
-    <label>Tahun:</label><select id="jYear">${yearOpts}</select>
+  const now = new Date();
+  const semua = [...new Set(Object.values(SCHEDULE).flatMap(d=>Object.values(d).flat()))].sort((a,b)=>a.localeCompare(b,'id'));
+  return `<div class="jd-bar">
+    <div class="jd-nav">
+      <button type="button" class="jd-btn" id="jPrev" aria-label="Bulan sebelumnya">‹</button>
+      <div class="jd-title" id="jTitle"></div>
+      <button type="button" class="jd-btn" id="jNext" aria-label="Bulan berikutnya">›</button>
+      <button type="button" class="jd-today-btn" id="jToday">Hari Ini</button>
+    </div>
+    <label class="jd-find">🔎 Sorot petugas
+      <select id="jFind"><option value="">— Semua petugas —</option>${semua.map(n=>`<option>${esc(n)}</option>`).join('')}</select>
+    </label>
   </div>
-  <div id="jCalWrap"></div>`;
+  <div id="jHero"></div>
+  <div id="jCalWrap"></div>
+  <div class="jd-note">Piket hanya hari kerja (Senin–Jumat). Satu shift berlaku selama satu minggu.</div>`;
 }
 function bindJadwal(){
-  const mSel=document.getElementById('jMonth'), ySel=document.getElementById('jYear');
-  const wrap=document.getElementById('jCalWrap');
+  let cur = new Date(); cur = new Date(cur.getFullYear(), cur.getMonth(), 1);
+  const wrap=document.getElementById('jCalWrap'), hero=document.getElementById('jHero'), find=document.getElementById('jFind');
+  const inisial = n => n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const tglPendek = d => `${d.getDate()} ${MONTHS_ID[d.getMonth()].slice(0,3)}`;
   function render(){
-    const month=parseInt(mSel.value,10), year=parseInt(ySel.value,10);
-    const daysInMonth = new Date(year, month+1, 0).getDate();
-    const firstDow = (new Date(year,month,1).getDay()+6)%7; // 0=Senin..6=Minggu
-    const cells = Array(firstDow).fill(null).concat(Array.from({length:daysInMonth},(_,i)=>i+1));
-    while(cells.length % 7 !== 0) cells.push(null);
-    const headers = ['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu','Minggu'];
-    let html = `<table class="cal-table"><thead><tr>${headers.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>`;
-    for(let i=0;i<cells.length;i+=7){
-      html += '<tr>';
-      for(let j=0;j<7;j++){
-        const d = cells[i+j];
-        if(d===null){ html += '<td class="cal-empty"></td>'; continue; }
-        const dateObj = new Date(year,month,d);
-        const dow = dateObj.getDay(); // 0 Minggu .. 6 Sabtu
-        if(dow===0 || dow===6){
-          html += `<td class="cal-weekend"><div class="cal-date">${d}</div></td>`;
-        } else {
-          const hari = DAYS[dow-1];
-          const shift = getShiftForDate(dateObj);
-          const pair = SCHEDULE[shift][hari];
-          html += `<td class="cal-day"><div class="cal-date">${d}</div><div class="cal-shift">Shift ${shift}</div><div class="cal-petugas">${pair[0]}<br>${pair[1]}</div></td>`;
+    const year=cur.getFullYear(), month=cur.getMonth(), todayISO=isoDate(new Date()), sorot=find.value;
+    document.getElementById('jTitle').textContent = `${MONTHS_ID[month]} ${year}`;
+    // kartu "hari ini"
+    const t=new Date(), dow=t.getDay();
+    if(dow>=1 && dow<=5){
+      const sh=getShiftForDate(t), pair=SCHEDULE[sh][DAYS[dow-1]];
+      hero.innerHTML = `<div class="jd-hero"><div class="jd-hero-l"><span>Petugas piket hari ini</span><b>${HARI_ID[dow]}, ${t.getDate()} ${MONTHS_ID[t.getMonth()]} ${t.getFullYear()}</b><em>Shift ${sh}</em></div>
+        <div class="jd-hero-names">${pair.map(n=>`<div class="jd-person"><i>${esc(inisial(n))}</i>${esc(n)}</div>`).join('')}</div></div>`;
+    } else hero.innerHTML = `<div class="jd-hero off"><div class="jd-hero-l"><span>Hari ini</span><b>${HARI_ID[dow]} — tidak ada jadwal piket</b></div></div>`;
+    // minggu-minggu dalam bulan (Senin–Jumat)
+    const first=new Date(year,month,1), last=new Date(year,month+1,0);
+    let mon = getMonday(first);
+    let html = `<div class="jd-grid"><div class="jd-h"></div>${DAYS.map(d=>`<div class="jd-h">${d}</div>`).join('')}`;
+    while(mon <= last){
+      const sh = getShiftForDate(mon), fri = new Date(mon); fri.setDate(fri.getDate()+4);
+      const adaHariBulanIni = [0,1,2,3,4].some(i=>{ const d=new Date(mon); d.setDate(d.getDate()+i); return d.getMonth()===month; });
+      if(adaHariBulanIni){
+        html += `<div class="jd-week"><span class="jd-shift">Shift ${sh}</span><span class="jd-range">${tglPendek(mon)} – ${tglPendek(fri)}</span></div>`;
+        for(let i=0;i<5;i++){
+          const d=new Date(mon); d.setDate(d.getDate()+i);
+          const iso=isoDate(d), luar=d.getMonth()!==month, pair=SCHEDULE[sh][DAYS[i]];
+          const kena = sorot && pair.includes(sorot);
+          const cls = ['jd-day', luar?'out':'', iso===todayISO?'today':'', iso<todayISO?'past':'', kena?'hit':'', (sorot&&!kena)?'dim':''].filter(Boolean).join(' ');
+          html += `<div class="${cls}"><div class="jd-date">${d.getDate()}${iso===todayISO?'<span>Hari ini</span>':''}</div>
+            ${pair.map(n=>`<div class="jd-name ${n===sorot?'me':''}"><i>${esc(inisial(n))}</i><span>${esc(n)}</span></div>`).join('')}</div>`;
         }
       }
-      html += '</tr>';
+      mon = new Date(mon); mon.setDate(mon.getDate()+7);
     }
-    html += '</tbody></table>';
-    wrap.innerHTML = html;
+    wrap.innerHTML = html + '</div>';
   }
-  mSel.addEventListener('change', render);
-  ySel.addEventListener('change', render);
+  document.getElementById('jPrev').addEventListener('click', ()=>{ cur=new Date(cur.getFullYear(), cur.getMonth()-1, 1); render(); });
+  document.getElementById('jNext').addEventListener('click', ()=>{ cur=new Date(cur.getFullYear(), cur.getMonth()+1, 1); render(); });
+  document.getElementById('jToday').addEventListener('click', ()=>{ const n=new Date(); cur=new Date(n.getFullYear(), n.getMonth(), 1); render(); });
+  find.addEventListener('change', render);
   render();
 }
 function monitorHTML(){
@@ -1606,14 +1651,14 @@ function renderAntreanBar(){
   const berikut = menunggu[0];
   const hb = ANTREAN.data && ANTREAN.data.hb;
   const jam = typeof hb==='number' ? new Date(hb).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}).replace('.',':') : '';
-  const status = on ? `<span class="qb-dot on"></span>Real-time` : `<span class="qb-dot"></span>${ANTREAN.state ? 'Server antrean tidak terhubung' + (jam?' · '+jam:'') : 'Server antrean belum terhubung'}`;
-  const lay = t => esc((jenisDariKode(t.k)||t.layanan||'').replace('Layanan ',''));
+    const lay = t => esc((jenisDariKode(t.k)||t.layanan||'').replace('Layanan ',''));
   bar.classList.toggle('off', !on);
+  bar.title = on ? 'Antrean real-time dari server antrean resepsionis' : (ANTREAN.state ? 'Server antrean tidak terhubung'+(jam?' · data terakhir '+jam:'') : 'Server antrean belum terhubung');
   bar.innerHTML = `
-    <div class="qb-item main"><span class="qb-l">Sedang Dilayani</span><span class="qb-v">${dilayani.length ? dilayani.map(t=>`<b>${esc(t.kode)}</b>`).join(' ') : '—'}</span>${dilayani.length===1?`<span class="qb-s">${lay(dilayani[0])}</span>`:''}</div>
-    <div class="qb-item"><span class="qb-l">Berikutnya</span><span class="qb-v">${berikut ? `<b>${esc(berikut.kode)}</b>` : '—'}</span>${berikut?`<span class="qb-s">${lay(berikut)}</span>`:''}</div>
-    <div class="qb-item fix"><span class="qb-l">Jumlah Antrean</span><span class="qb-v"><b>${tk.length}</b></span><span class="qb-s">${menunggu.length} menunggu</span></div>
-    <div class="qb-status">${status}</div>`;
+    <div class="qh-item main" title="${dilayani.length===1?'Sedang dilayani: '+lay(dilayani[0]):'Sedang dilayani'}"><span class="qh-l">Dilayani</span><span class="qh-v">${dilayani.length ? dilayani.map(t=>esc(t.kode)).join(' ') : '–'}</span></div>
+    <div class="qh-item" title="${berikut?'Berikutnya: '+lay(berikut):'Belum ada antrean menunggu'}"><span class="qh-l">Berikutnya</span><span class="qh-v">${berikut ? esc(berikut.kode) : '–'}</span></div>
+    <div class="qh-item" title="${menunggu.length} menunggu dari ${tk.length} antrean hari ini"><span class="qh-l">Antrean</span><span class="qh-v">${tk.length}<small>${menunggu.length} tunggu</small></span></div>
+    <div class="qh-status"><span class="qb-dot ${on?'on':''}"></span>${on?'Live':'Offline'}</div>`;
 }
 setInterval(()=>{ renderAntreanBar(); if(ANTREAN.es && ANTREAN.es.readyState===2) antreanSambung(); }, 5000);
 antreanSambung();
