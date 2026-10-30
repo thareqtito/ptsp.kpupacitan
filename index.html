@@ -54,7 +54,7 @@ main#grid.staffgrid{grid-template-columns:repeat(2,1fr);grid-template-rows:repea
 .tile .label{font-size:clamp(17px,2.5vh,25px);font-weight:800;text-align:left;padding-right:56px;line-height:1.25;color:#7a1428;min-height:3.75em;display:flex;align-items:flex-end;}
 .tile-arrow{position:absolute;right:16px;bottom:16px;width:clamp(38px,5.4vh,50px);height:clamp(38px,5.4vh,50px);border-radius:50%;background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;display:flex;align-items:center;justify-content:center;font-size:clamp(18px,2.6vh,26px);font-weight:800;box-shadow:0 0 0 3px #fff,0 0 0 5px var(--gold);}
 .speak-btn{position:absolute;top:10px;right:10px;background:#f6e6e9;border:none;border-radius:50%;width:30px;height:30px;font-size:14px;cursor:pointer;color:var(--red);}
-footer{flex:0 0 auto;text-align:center;font-size:clamp(11px,1.5vh,14px);font-weight:600;color:var(--sub);padding:.7vh 0;}
+footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-content:center;padding-left:80px !important;padding-right:80px !important;text-align:center;font-size:clamp(11px,1.5vh,14px);font-weight:600;color:var(--sub);padding:.7vh 0;}
 #overlay{position:fixed;inset:0;background:rgba(25,3,10,.74);display:flex;align-items:center;justify-content:center;z-index:50;padding:3vh 3vw;}
 #overlay.hidden{display:none;}
 #modalBox{background:var(--card);color:var(--text);border-radius:20px;padding:3vh 3vw;max-width:90vw;max-height:90vh;width:90vw;overflow-y:auto;position:relative;min-width:320px;box-shadow:0 24px 60px rgba(0,0,0,.4);}
@@ -105,7 +105,11 @@ footer{flex:0 0 auto;text-align:center;font-size:clamp(11px,1.5vh,14px);font-wei
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
 #printArea,#printReport{display:none;}
-#absenAlert{position:fixed;right:24px;bottom:56px;z-index:60;display:flex;align-items:center;gap:14px;max-width:min(560px,calc(100vw - 32px));background:#fff;border:3px solid var(--gold);border-left:10px solid var(--red);border-radius:16px;padding:14px 16px;box-shadow:0 16px 40px rgba(0,0,0,.35);animation:aaIn .35s ease-out;}
+.voice-fab{position:fixed;right:16px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:45;width:48px;height:48px;border-radius:50%;border:3px solid #f0c987;background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;font-size:22px;line-height:1;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;}
+.voice-fab:hover,.voice-fab:focus-visible{transform:scale(1.06);outline:3px solid var(--gold);}
+.voice-fab.active{background:#f0c987;border-color:var(--red);color:#3b0a14;box-shadow:0 0 0 6px rgba(240,201,135,.45),0 8px 22px rgba(0,0,0,.3);}
+@media print{.voice-fab{display:none !important;}}
+#absenAlert{position:fixed;right:24px;bottom:96px;z-index:60;display:flex;align-items:center;gap:14px;max-width:min(560px,calc(100vw - 32px));background:#fff;border:3px solid var(--gold);border-left:10px solid var(--red);border-radius:16px;padding:14px 16px;box-shadow:0 16px 40px rgba(0,0,0,.35);animation:aaIn .35s ease-out;}
 @keyframes aaIn{from{transform:translateY(20px);opacity:0}to{transform:none;opacity:1}}
 #absenAlert .aa-icon{font-size:36px;animation:aaRing 1.2s ease-in-out infinite;}
 @keyframes aaRing{0%,100%{transform:rotate(0)}20%{transform:rotate(-14deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-8deg)}80%{transform:rotate(6deg)}}
@@ -236,7 +240,6 @@ form.absen textarea{min-height:160px;resize:vertical;}
     </div>
     <div class="header-controls">
       <button class="hbtn hadir-top" id="hadirBtn">🧾 Daftar Hadir</button>
-      <button class="hbtn" id="voiceToggle" aria-pressed="false">🔊 Mode Suara</button>
       <button class="hbtn" id="skmBtn">📊 SKM</button>
       <span id="staffBar" class="staff-bar" hidden>
         <button class="hbtn staff exit" id="stExit">🔒 Keluar</button>
@@ -247,6 +250,7 @@ form.absen textarea{min-height:160px;resize:vertical;}
   <footer>Sentuh salah satu menu untuk melihat layanan &middot; Gunakan tombol 🔊 pada setiap menu untuk mendengarkan pilihan</footer>
 </div>
 
+<button id="voiceToggle" class="voice-fab" aria-pressed="false" aria-label="Mode Suara" title="Mode Suara">🔊</button>
 <div id="overlay" class="hidden" role="dialog" aria-modal="true">
   <div id="modalBox">
     <button id="modalClose" aria-label="Tutup">✕</button>
@@ -958,18 +962,33 @@ function monitorHTML(){
   </div>
   <div id="mTableWrap"><p style="text-align:center;padding:4vh 0;">Memuat data...</p></div>`;
 }
+function fmtJam(v){
+  if(v===undefined || v===null || v==='') return '';
+  const str = String(v).trim();
+  let m = str.match(/^(\d{1,2})[:.](\d{2})(?![\d-])/);
+  if(m) return `${m[1].padStart(2,'0')}:${m[2]}`;
+  const d = new Date(str);
+  if(!isNaN(d.getTime()) && /T\d{2}:\d{2}/.test(str)){
+    // Google Sheets menyimpan jam sebagai tanggal 30-12-1899. Jika detik UTC = 0, jam asli = jam UTC; selain itu (zona LMT) pakai jam lokal.
+    const utc = d.getUTCSeconds()===0;
+    const h = utc ? d.getUTCHours() : d.getHours(), mi = utc ? d.getUTCMinutes() : d.getMinutes();
+    return `${String(h).padStart(2,'0')}:${String(mi).padStart(2,'0')}`;
+  }
+  return str;
+}
+function normAbsen(r){ if(!r || typeof r!=='object') return r; return Object.assign({}, r, {mulai: fmtJam(r.mulai), selesai: fmtJam(r.selesai)}); }
 async function loadAllRecords(){
   if(CONFIG.SHEET_WEBHOOK_URL){
     try{
       const sep = CONFIG.SHEET_WEBHOOK_URL.includes('?') ? '&' : '?';
       const res = await fetch(CONFIG.SHEET_WEBHOOK_URL + sep + 'action=list');
       const remote = await res.json();
-      return remote; // spreadsheet jadi sumber kebenaran — baris yang dihapus di sana ikut hilang di sini
+      return Array.isArray(remote) ? remote.map(normAbsen) : remote; // spreadsheet jadi sumber kebenaran — baris yang dihapus di sana ikut hilang di sini
     }catch(e){ /* server tidak terjangkau, lanjut pakai cadangan lokal di bawah */ }
   }
   let local=[];
   try{ local = JSON.parse(localStorage.getItem('kpu_absensi_log')||'[]'); }catch(e){}
-  return local;
+  return local.map(normAbsen);
 }
 function bindMonitor(){
   const monthSel=document.getElementById('mMonth');
@@ -1017,7 +1036,7 @@ function saveLocalLog(data){
 /* ================= BUKU DAFTAR HADIR PEMOHON / PENERIMA LAYANAN ================= */
 // URL Web App Apps Script "Daftar Hadir PTSP" (lihat Code_DaftarHadir.gs), berakhiran /exec.
 // Boleh diisi DI SINI, atau di objek CONFIG paling atas (HADIR_WEBHOOK_URL: "..."). Keduanya berfungsi.
-CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || '';
+CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || 'https://script.google.com/macros/s/AKfycbzGOvQeUa80rLz1w9vXpTFjSe3DFempIvjz2fu7d3GAp3WO72PmZNY1ppPodlmsmcM4/exec';
 const HADIR_ITEM = {icon:'🧾', title:'Daftar Hadir Pemohon', hadir:true};
 const REKAP_ITEM = {icon:'📚', title:'Rekap Daftar Hadir Pemohon', rekap:true};
 document.getElementById('hadirBtn').addEventListener('click', ()=>openStaff(HADIR_ITEM));
