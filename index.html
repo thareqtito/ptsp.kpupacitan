@@ -816,7 +816,7 @@ function openPinPrompt(){
   const logo = document.querySelector('header .logo');
   logo.setAttribute('draggable','false');
   logo.addEventListener('contextmenu', e=>e.preventDefault());
-  logo.addEventListener('click', ()=>{ if(isStaff) setStaffMode(false); else openPinPrompt(); });
+  logo.addEventListener('click', ()=>{ setStaffMode(!isStaff); });
 })();
 function absenFormHTML(){
   const now = new Date();
@@ -1458,10 +1458,21 @@ function laporanHTML(L){
   <div style="text-align:center;margin-top:34px;">Pacitan, ${esc(L.tanggal)}</div>
   <div class="lp-ttd">${sig.map((n,i)=>`<div><div>Petugas Piket ${i+1}</div><div class="sp"></div><div class="nm">${n?esc(n):'(.................................)'}</div></div>`).join('')}</div>`;
 }
+const FOOTER_DOK = 'Pelayanan Publik Terintegrasi Satu Pintu - KPU Kabupaten Pacitan';
+function waktuCetak(){ const n=new Date(), p=x=>String(x).padStart(2,'0'); return `${p(n.getDate())}/${p(n.getMonth()+1)}/${n.getFullYear()}, ${p(n.getHours())}.${p(n.getMinutes())}`; }
 function printReport(html, size, extraCss){
   ['printArea','printReport'].forEach(id=>{ const x=document.getElementById(id); if(x) x.remove(); });
   const div=document.createElement('div'); div.id='printReport';
-  div.innerHTML = `<style>@page{size:${size};margin:14mm 15mm;} ${LAPORAN_CSS} #printReport{${extraCss||''}}</style>${html}`;
+  // margin halaman 0 -> header/footer bawaan browser (tanggal, judul, URL) tidak tercetak; margin & footer dibuat sendiri
+  div.innerHTML = `<style>@page{size:${size};margin:0;} ${LAPORAN_CSS} #printReport{${extraCss||''}}
+    #printReport .pr-frame{width:100%;border-collapse:collapse;} #printReport .pr-frame>thead>tr>td,#printReport .pr-frame>tbody>tr>td,#printReport .pr-frame>tfoot>tr>td{padding:0;border:none;}
+    #printReport .pr-top{height:14mm;} #printReport .pr-bot{height:17mm;} #printReport .pr-body{padding:0 15mm;}
+    #printReport .pr-foot{position:fixed;left:15mm;right:15mm;bottom:7mm;display:flex;justify-content:space-between;gap:12px;font-family:Arial,Helvetica,sans-serif;font-size:8.5pt;color:#555;border-top:0.6pt solid #999;padding-top:1.6mm;}
+  </style>
+  <table class="pr-frame"><thead><tr><td><div class="pr-top"></div></td></tr></thead>
+    <tfoot><tr><td><div class="pr-bot"></div></td></tr></tfoot>
+    <tbody><tr><td><div class="pr-body">${html}</div></td></tr></tbody></table>
+  <div class="pr-foot"><span>${FOOTER_DOK}</span><span>${waktuCetak()}</span></div>`;
   document.body.appendChild(div);
   toast('Pilih printer, atau "Simpan sebagai PDF" untuk file PDF.');
   const imgs=Array.from(div.querySelectorAll('img'));
@@ -1517,7 +1528,11 @@ async function downloadLaporanWord(iso){
     const ttd = new D.Table({ width:DX(9606), columnWidths:[4803,4803], layout:FIX, borders:noB, rows:[ new D.TableRow({cantSplit:true, children: sig.map((n,i)=> new D.TableCell({borders:noB, width:DX(4803), children:[
       P(T(`Petugas Piket ${i+1}`),{alignment:D.AlignmentType.CENTER, spacing:{after:1100}}),
       P(T(n||'(.................................)',{bold:true, underline: n?{}:undefined}),{alignment:D.AlignmentType.CENTER}) ]})) }) ]});
-    const doc = new D.Document({ sections:[{ properties:{ page:{ size:{width:11906, height:16838}, margin:{top:1000, bottom:1000, left:1200, right:1100} } },
+    const footer = new D.Footer({ children:[ new D.Paragraph({ tabStops:[{type:D.TabStopType.RIGHT, position:9606}],
+      border:{top:{style:D.BorderStyle.SINGLE, size:4, color:'999999', space:4}},
+      children:[ T(FOOTER_DOK,{size:17, color:'555555'}), new D.TextRun({children:[new D.Tab(), waktuCetak()], font:F, size:17, color:'555555'}) ] }) ] });
+    const doc = new D.Document({ sections:[{ properties:{ page:{ size:{width:11906, height:16838}, margin:{top:1000, bottom:1000, left:1200, right:1100, footer:500} } },
+      footers:{ default: footer },
       children:[ ...judul, info, H('A. Rekapitulasi Pelayanan'), rekap, H('B. Daftar Pelayanan'), daftar,
         P(T(''),{alignment:D.AlignmentType.CENTER, spacing:{before:200, after:0}}), P(T(`Pacitan, ${L.tanggal}`),{alignment:D.AlignmentType.CENTER, spacing:{before:120, after:120}}), ttd ] }] });
     const blob = await D.Packer.toBlob(doc);
@@ -1563,7 +1578,8 @@ async function checkAbsenReminder(){
   document.body.appendChild(el);
   el.querySelector('.aa-go').addEventListener('click', ()=>{
     hideAbsenAlert();
-    if(isStaff) openStaff(ABSEN_ITEM); else { window.__afterPin = ()=>openStaff(ABSEN_ITEM); openPinPrompt(); }
+    if(!isStaff) setStaffMode(true);
+    openStaff(ABSEN_ITEM);
   });
   el.querySelector('.aa-later').addEventListener('click', ()=>{ try{ localStorage.setItem('kpu_absen_snooze', String(Date.now()+15*60*1000)); }catch(e){} hideAbsenAlert(); });
   chime();
