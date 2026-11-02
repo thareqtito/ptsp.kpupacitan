@@ -43,7 +43,7 @@ header>*{position:relative;z-index:1;}
 .hbtn.active{background:#f0c987;color:#3b0a14;}
 main#grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:2.2vh 1.8vw;padding:2.6vh 3vw;min-height:0;}
 main#grid.rows5{grid-template-columns:repeat(5,1fr);}
-main#grid.staffgrid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-content:stretch;max-width:1000px;margin:0 auto;width:100%;}
+main#grid.staffgrid{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-content:stretch;max-width:1200px;margin:0 auto;width:100%;}
 .tile{background:rgba(255,255,255,.80);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);border:1.5px solid rgba(155,28,49,.18);border-radius:var(--radius);box-shadow:0 4px 14px rgba(90,15,31,.12);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:1vh;cursor:pointer;position:relative;color:var(--text);padding:2.4vh 1.6vw 2.2vh;text-align:left;transition:transform .14s,box-shadow .14s,border-color .14s;}
 .tile:hover,.tile:focus-visible{transform:translateY(-4px);box-shadow:0 12px 26px rgba(90,15,31,.22);border-color:var(--gold);outline:3px solid var(--gold);}
 .icon-wrap{width:17vh;height:17vh;max-width:150px;max-height:150px;border-radius:46% 54% 52% 48% / 52% 46% 54% 48%;display:flex;align-items:center;justify-content:center;background:rgba(251,232,236,.9);margin:auto;}
@@ -102,7 +102,13 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .formppid-bar .print-btn{background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;}
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
-#printArea,#printReport{display:none;}.hadir-noticket{text-align:center;border:2px dashed #e0c4ca;border-radius:16px;padding:4vh 2vw;background:#fffafa;display:flex;flex-direction:column;align-items:center;gap:10px;}
+#printArea,#printReport{display:none;}
+.pd-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.pd-bar .print-btn{text-decoration:none;display:inline-flex;align-items:center;}
+.pd-ver{margin-right:auto;font-size:14px;color:var(--sub);} .pd-ver b{color:var(--red);}
+.pd-new{background:#fbf3f5;border:1px solid #eadde0;border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13.5px;}
+.pd-new summary{cursor:pointer;font-weight:800;color:var(--red);} .pd-new ul{margin:6px 0 2px;padding-left:20px;}
+.pd-frame{width:100%;height:calc(90vh - 6vh - 190px);border:1px solid #eadde0;border-radius:10px;background:#f4f4f4;}.hadir-noticket{text-align:center;border:2px dashed #e0c4ca;border-radius:16px;padding:4vh 2vw;background:#fffafa;display:flex;flex-direction:column;align-items:center;gap:10px;}
 .hn-icon{font-size:52px;} .hn-title{font-size:clamp(18px,2.4vh,22px);font-weight:800;color:var(--red);}
 .hn-text{font-size:15px;color:var(--text);max-width:440px;line-height:1.5;} .hn-wait{font-size:13px;font-weight:700;color:var(--sub);display:flex;align-items:center;gap:8px;}
 .hn-small{font-size:12px;color:var(--sub);max-width:420px;line-height:1.45;}
@@ -434,7 +440,7 @@ function toast(msg){
 
 function renderGrid(){
   const grid = document.getElementById('grid');
-  const list = isStaff ? [ABSEN_ITEM, JADWAL_ITEM, REKAP_ITEM, MONITOR_ITEM] : SERVICES;
+  const list = isStaff ? [ABSEN_ITEM, JADWAL_ITEM, REKAP_ITEM, MONITOR_ITEM, PANDUAN_ITEM] : SERVICES;
   grid.className = isStaff ? 'staffgrid' : (list.length > 8 ? 'rows5' : '');
   grid.innerHTML = '';
   list.forEach((svc, idx)=>{
@@ -447,7 +453,7 @@ function renderGrid(){
     const iconHtml = svc.img ? `<img src="data:image/png;base64,${svc.img}" alt="" class="tile-icon-img">` : `<div class="icon">${svc.icon}</div>`;
     btn.innerHTML = `<button class="speak-btn" aria-label="Dengarkan ${svc.title}" onclick="event.stopPropagation();speak('${svc.title.replace(/'/g,"\\'")}')">🔊</button>
       <div class="icon-wrap">${iconHtml}</div><div class="label">${svc.title}</div><span class="tile-arrow" aria-hidden="true">→</span>`;
-    btn.addEventListener('click', ()=>{ if(svc.form||svc.monitor||svc.schedule||svc.hadir||svc.rekap) openStaff(svc); else openModal(svc); });
+    btn.addEventListener('click', ()=>{ if(svc.form||svc.monitor||svc.schedule||svc.hadir||svc.rekap||svc.panduan) openStaff(svc); else openModal(svc); });
     btn.addEventListener('focus', ()=>{ if(voiceMode) speak(svc.title); });
     btn.addEventListener('mouseenter', ()=>{ if(voiceMode) speak(svc.title); });
     grid.appendChild(btn);
@@ -867,6 +873,7 @@ function openStaff(item){
   else if(item.schedule){ body.innerHTML = jadwalHTML(); bindJadwal(); }
   else if(item.rekap){ body.innerHTML = rekapHTML(); bindRekap(); }
   else if(item.hadir){ openHadir(); }
+  else if(item.panduan){ openPanduan(); }
   document.getElementById('overlay').classList.remove('hidden');
   document.getElementById('modalBox').scrollTop = 0;
 }
@@ -1204,6 +1211,24 @@ function saveLocalLog(data){
 CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || 'https://script.google.com/macros/s/AKfycbzYsWxfvcFA4EjaZ34uFk7ijwJPuYcLZBAdMJ9edDh-nd7u-APX-gqLoo1QHw-8GQ99/exec';
 const HADIR_ITEM = {icon:'🧾', title:'Daftar Hadir Pemohon', hadir:true};
 const REKAP_ITEM = {icon:'📚', title:'Rekap Daftar Hadir Pemohon', rekap:true};
+const PANDUAN_ITEM = {icon:'📘', title:'Buku Panduan', panduan:true};
+// File PDF diletakkan di folder yang sama dengan Index.html (repo GitHub). Ganti nama/versi di sini saat panduan diperbarui.
+const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', versi:'Edisi 1.1', tanggal:'2 November 2026', catatan:[
+  'Satu Peta Data KPU (Pemilu & Pilkada 2024), Dokumen Badan Adhoc, dan Surat Keterangan Pernah Menjadi Badan Adhoc',
+  'Daftar Hadir mengikuti tiket antrean; opsi Catat Tanpa Tiket (nomor M01, M02, ...)',
+  'Infografis baru: Alur Mekanisme PPID dan Mekanisme Sosialisasi Pendidikan Pemilih']};
+function openPanduan(){
+  const body = document.getElementById('modalBody');
+  body.style.cssText = 'display:block;height:auto;';
+  body.innerHTML = `<div class="pd-bar">
+      <div class="pd-ver"><b>${PANDUAN.versi}</b> · diperbarui ${PANDUAN.tanggal}</div>
+      <a class="print-btn" href="${PANDUAN.file}" target="_blank" rel="noopener">↗ Buka di tab baru</a>
+      <a class="print-btn" href="${PANDUAN.file}" download>⬇️ Unduh PDF</a>
+    </div>
+    <details class="pd-new"><summary>Yang baru di ${PANDUAN.versi}</summary><ul>${PANDUAN.catatan.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></details>
+    <iframe class="pd-frame" src="${PANDUAN.file}#view=FitH" title="Buku Panduan PTSP"></iframe>
+    <div class="hadir-note">Jika PDF tidak tampil, tekan <b>Buka di tab baru</b>.</div>`;
+}
 document.getElementById('hadirBtn').addEventListener('click', ()=>openStaff(HADIR_ITEM));
 const HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
 const STATUS_OPTS = ['Selesai','Sedang dalam proses PPID','Lainnya'];
