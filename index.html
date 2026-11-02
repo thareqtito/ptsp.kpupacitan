@@ -102,7 +102,13 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .formppid-bar .print-btn{background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;}
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
-#printArea,#printReport{display:none;}
+#printArea,#printReport{display:none;}.hadir-noticket{text-align:center;border:2px dashed #e0c4ca;border-radius:16px;padding:4vh 2vw;background:#fffafa;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.hn-icon{font-size:52px;} .hn-title{font-size:clamp(18px,2.4vh,22px);font-weight:800;color:var(--red);}
+.hn-text{font-size:15px;color:var(--text);max-width:440px;line-height:1.5;} .hn-wait{font-size:13px;font-weight:700;color:var(--sub);display:flex;align-items:center;gap:8px;}
+.hn-small{font-size:12px;color:var(--sub);max-width:420px;line-height:1.45;}
+.spinner.dark{border-color:rgba(122,20,40,.25);border-top-color:var(--red);margin-right:0;}
+#hadirForm input[readonly]{background:#f6f0f1;}
+
 .sk-wrap{display:grid;grid-template-columns:minmax(0,0.75fr) minmax(0,1.6fr);gap:2vw;align-items:start;}
 .sk-prev{position:relative;background:#fff;border-radius:12px;box-shadow:0 6px 16px rgba(0,0,0,.18);padding:6px;cursor:zoom-in;text-align:center;}
 .sk-prev img{width:100%;display:block;border-radius:8px;}
@@ -1290,15 +1296,31 @@ async function openHadir(){
   const [all] = await Promise.all([loadHadir(), pollAntrean()]);
   renderHadir(all);
 }
+function hadirAutoRefresh(){
+  // form Daftar Hadir terbuka & menunggu tiket -> buka form begitu tiket masuk (atau koneksi berubah)
+  const wait = document.getElementById('hadirNoTicket');
+  const offlineForm = document.getElementById('hManualLink');
+  if(!wait && !offlineForm) return;
+  const todays = hadirLocal().map(normHadir).filter(r=>r.tanggal===isoDate(new Date()));
+  const live = antreanTerhubung(), ada = antreanKandidat(todays).length>0;
+  if((wait && (ada || !live)) || (offlineForm && live && !document.getElementById('hNama').value)) {
+    clearTimeout(hadirAutoRefresh._t);
+    hadirAutoRefresh._t = setTimeout(()=>{ if(document.getElementById('hadirNoTicket')||document.getElementById('hManualLink')) renderHadir(hadirLocal().map(normHadir)); }, 50);
+  }
+}
+let HADIR_MANUAL = false; // petugas memilih "Catat Tanpa Tiket"
 function renderHadir(all){
   const body = document.getElementById('modalBody');
   const today = isoDate(new Date());
-  const todays = all.filter(r=>r.tanggal===today).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
+  const todays = all.filter(r=>r.tanggal===today).sort((a,b)=>String(a.waktuDaftar||'').localeCompare(String(b.waktuDaftar||'')) || String(a.noAntrian).localeCompare(String(b.noAntrian)));
   const pending = all.filter(r=>!r.status).sort((a,b)=> (a.tanggal+a.noAntrian).localeCompare(b.tanggal+b.noAntrian));
   const kandidat = antreanKandidat(todays);
   const tiketDefault = kandidat[0] || null;
   const nextNo = tiketDefault ? tiketDefault.kode : pad3(todays.reduce((m,r)=>Math.max(m, parseInt(r.noAntrian,10)||0), 0) + 1);
   const jenisDefault = tiketDefault ? jenisDariKode(tiketDefault.k) : '';
+  const live = !!CONFIG.FIREBASE_URL && antreanTerhubung();
+  const manualNo = 'M' + String(todays.filter(r=>/^M\d+$/.test(r.noAntrian)).reduce((m,r)=>Math.max(m, parseInt(r.noAntrian.slice(1),10)||0), 0) + 1).padStart(2,'0');
+  const mode = HADIR_MANUAL ? 'manual' : (live ? (kandidat.length ? 'tiket' : 'kosong') : 'offline');
   const offline = !CONFIG.HADIR_WEBHOOK_URL ? `<div class="hadir-warn">⚠️ URL spreadsheet Daftar Hadir belum diatur — data hanya tersimpan di perangkat ini.</div>` : '';
   let top;
   if(pending.length){
@@ -1321,13 +1343,25 @@ function renderHadir(all){
       </form>
       ${pending.length>1 ? `<div class="hadir-warn" style="margin-top:10px">Masih ada ${pending.length-1} pemohon lain yang status pelayanannya belum diisi.</div>` : ''}
     </div>`;
+  } else if(mode==='kosong'){
+    top = `<div class="hadir-noticket" id="hadirNoTicket">
+      <div class="hn-icon">🎫</div>
+      <div class="hn-title">Belum ada pemohon yang mengambil tiket antrean</div>
+      <div class="hn-text">Arahkan pemohon ke <b>resepsionis</b> untuk mengambil tiket terlebih dahulu. Form akan terbuka otomatis begitu tiket tercetak.</div>
+      <div class="hn-wait"><span class="spinner dark"></span> Menunggu tiket dari mesin antrean…</div>
+      <button type="button" class="ganti-btn" id="hManual">Catat Tanpa Tiket</button>
+      <div class="hn-small">Gunakan hanya bila pemohon tidak bisa mengambil tiket (misalnya mesin antrean rusak). Nomor diberi awalan <b>M</b> agar tidak bentrok dengan nomor tiket.</div>
+    </div>`;
   } else {
-    top = `<form class="absen" id="hadirForm" autocomplete="off">
+    const banner = mode==='manual'
+      ? `<div class="hadir-warn">✍️ Pencatatan <b>tanpa tiket</b> — nomor ${manualNo} (awalan M). <a href="#" id="hManualBatal">Batal</a></div>`
+      : mode==='offline' ? `<div class="hadir-warn">⚠️ Mesin antrean tidak terhubung. Isi <b>No. Urut Antrian sesuai nomor pada tiket</b> yang dipegang pemohon. Pemohon tanpa tiket? <a href="#" id="hManualLink">Catat tanpa tiket</a></div>` : '';
+    top = `${banner}<form class="absen" id="hadirForm" autocomplete="off">
       <div class="row2">
         <div><label>Hari, Tanggal</label><input type="text" value="${esc(tglPanjang(today))}" readonly></div>
-        <div style="max-width:220px"><label>No. Urut Antrian</label><input type="text" id="hNo" inputmode="numeric" maxlength="3" value="${nextNo}" required></div>
+        <div style="max-width:220px"><label>No. Urut Antrian</label><input type="text" id="hNo" inputmode="numeric" maxlength="3" value="${mode==='manual'?manualNo:(mode==='offline'?'':nextNo)}" ${mode==='offline'?'placeholder="Nomor di tiket"':'readonly'} required>${mode==='tiket'?'<div class="hadir-note" style="margin-top:3px">Pilih dari tiket di bawah</div>':''}</div>
       </div>
-      ${kandidat.length ? `<div class="aq-pick"><span>Dari antrean:</span>${kandidat.slice(0,8).map(t=>`<button type="button" class="aq-chip ${t.status==='dipanggil'?'on':''} ${t===tiketDefault?'sel':''}" data-kode="${esc(t.kode)}" data-jenis="${esc(jenisDariKode(t.k))}"><b>${esc(t.kode)}</b> ${esc((jenisDariKode(t.k)||t.layanan).replace('Layanan ',''))}${t.status==='dipanggil'?' · dipanggil':''}</button>`).join('')}</div>` : ''}
+      ${mode==='tiket' && kandidat.length ? `<div class="aq-pick"><span>Dari antrean:</span>${kandidat.slice(0,8).map(t=>`<button type="button" class="aq-chip ${t.status==='dipanggil'?'on':''} ${t===tiketDefault?'sel':''}" data-kode="${esc(t.kode)}" data-jenis="${esc(jenisDariKode(t.k))}"><b>${esc(t.kode)}</b> ${esc((jenisDariKode(t.k)||t.layanan).replace('Layanan ',''))}${t.status==='dipanggil'?' · dipanggil':''}</button>`).join('')}</div>` : ''}
       <div><label>Nama Lengkap</label><input type="text" id="hNama" required></div>
       <div><label>Alamat</label><textarea id="hAlamat" rows="2" style="min-height:44px" required></textarea></div>
       <div class="row2">
@@ -1345,9 +1379,15 @@ function renderHadir(all){
     </tbody></table>` : `<p class="hadir-empty">Belum ada pemohon tercatat hari ini.</p>`;
   body.innerHTML = `${offline}<div class="hadir-wrap"><div class="hadir-main">${top}</div>
     <div class="hadir-side"><div class="hadir-side-title">Pemohon Hari Ini · ${esc(tglSaja(today))} <span>${todays.length} orang</span></div>${list}</div></div>`;
-  if(pending.length) bindStatusForm(pending[0]); else bindHadirForm(todays);
+  if(pending.length) bindStatusForm(pending[0]);
+  else if(mode==='kosong') document.getElementById('hManual').addEventListener('click', ()=>{ HADIR_MANUAL=true; renderHadir(hadirLocal().map(normHadir)); });
+  else {
+    bindHadirForm(todays, mode);
+    const b1=document.getElementById('hManualBatal'); if(b1) b1.addEventListener('click', e=>{ e.preventDefault(); HADIR_MANUAL=false; renderHadir(hadirLocal().map(normHadir)); });
+    const b2=document.getElementById('hManualLink'); if(b2) b2.addEventListener('click', e=>{ e.preventDefault(); HADIR_MANUAL=true; renderHadir(hadirLocal().map(normHadir)); });
+  }
 }
-function bindHadirForm(todays){
+function bindHadirForm(todays, mode){
   const f=document.getElementById('hadirForm');
   const no=document.getElementById('hNo');
   f.querySelectorAll('.aq-chip').forEach(b=>b.addEventListener('click', ()=>{
@@ -1355,11 +1395,14 @@ function bindHadirForm(todays){
     f.querySelectorAll('.aq-chip').forEach(x=>x.classList.toggle('sel', x===b));
     document.getElementById('hNama').focus();
   }));
-  no.addEventListener('input', ()=>{ no.value = no.value.replace(/\D/g,'').slice(0,3); });
-  no.addEventListener('blur', ()=>{ if(no.value) no.value = pad3(parseInt(no.value,10)||0); });
+  if(mode==='offline'){
+    no.addEventListener('input', ()=>{ no.value = no.value.replace(/\D/g,'').slice(0,3); });
+    no.addEventListener('blur', ()=>{ if(no.value) no.value = pad3(parseInt(no.value,10)||0); });
+  }
   f.addEventListener('submit', async e=>{
     e.preventDefault();
-    const noVal = pad3(parseInt(no.value,10)||0);
+    const noVal = mode==='manual' ? no.value : pad3(parseInt(no.value,10)||0);
+    if(mode==='tiket' && !antreanTiket().some(t=>t.kode===noVal)){ toast('Pilih nomor dari tiket antrean.'); return; }
     if(noVal==='000'){ toast('No. urut antrian tidak valid.'); no.focus(); return; }
     if(todays.some(r=>r.noAntrian===noVal)){ toast(`No. antrian ${noVal} sudah dipakai hari ini.`); no.focus(); return; }
     const btn=document.getElementById('hSubmit'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
@@ -1371,7 +1414,8 @@ function bindHadirForm(todays){
       jenisLayanan: document.getElementById('hJenis').value, keperluan: document.getElementById('hKeperluan').value.trim(),
       status:'', keterangan:'', waktuDaftar: jamSekarang(), waktuSelesai:'' };
     const where = await saveHadir(rec);
-    antreanCmd(noVal, 'dipanggil');
+    if(mode!=='manual') antreanCmd(noVal, 'dipanggil');
+    HADIR_MANUAL = false;
     toast(where==='server' ? `Pemohon No. ${noVal} tercatat.` : `Pemohon No. ${noVal} tersimpan di perangkat (akan dikirim saat koneksi tersedia).`);
     renderHadir(hadirLocal().map(normHadir));
   });
@@ -1746,6 +1790,7 @@ async function antreanCmd(kode, status){
   try{ await fetch(fbUrl('/cmds'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({kode, status, ts:{'.sv':'timestamp'}})}); }catch(e){}
 }
 function renderAntreanBar(){
+  hadirAutoRefresh();
   const bar = document.getElementById('queueBar');
   if(!CONFIG.FIREBASE_URL){ bar.hidden = true; return; }
   bar.hidden = false;
