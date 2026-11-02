@@ -1213,10 +1213,11 @@ const HADIR_ITEM = {icon:'🧾', title:'Daftar Hadir Pemohon', hadir:true};
 const REKAP_ITEM = {icon:'📚', title:'Rekap Daftar Hadir Pemohon', rekap:true};
 const PANDUAN_ITEM = {icon:'📘', title:'Buku Panduan Aplikasi PTSP', panduan:true};
 // File PDF diletakkan di folder yang sama dengan Index.html (repo GitHub). Ganti nama/versi di sini saat panduan diperbarui.
-const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', versi:'Edisi 1.1', tanggal:'2 November 2026', catatan:[
+const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', versi:'Edisi 1.2', tanggal:'2 November 2026', catatan:[
+  'Panel antrean: label baru Sedang Dilayani, Nomor Antrean Berikutnya, dan Jumlah Antrean',
+  'Menu baru di Mode Petugas: Buku Panduan Aplikasi PTSP',
   'Satu Peta Data KPU (Pemilu & Pilkada 2024), Dokumen Badan Adhoc, dan Surat Keterangan Pernah Menjadi Badan Adhoc',
-  'Daftar Hadir mengikuti tiket antrean; opsi Catat Tanpa Tiket (nomor M01, M02, ...)',
-  'Infografis baru: Alur Mekanisme PPID dan Mekanisme Sosialisasi Pendidikan Pemilih']};
+  'Daftar Hadir mengikuti tiket antrean; opsi Catat Tanpa Tiket (nomor M01, M02, ...)']};
 function openPanduan(){
   const body = document.getElementById('modalBody');
   body.style.cssText = 'display:block;height:auto;';
