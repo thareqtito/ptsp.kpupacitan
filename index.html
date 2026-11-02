@@ -43,7 +43,8 @@ header>*{position:relative;z-index:1;}
 .hbtn.active{background:#f0c987;color:#3b0a14;}
 main#grid{flex:1;display:grid;grid-template-columns:repeat(4,1fr);gap:2.2vh 1.8vw;padding:2.6vh 3vw;min-height:0;}
 main#grid.rows5{grid-template-columns:repeat(5,1fr);}
-main#grid.staffgrid{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-content:stretch;max-width:1200px;margin:0 auto;width:100%;}
+main#grid.staffgrid{grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(2,minmax(0,1fr));align-content:stretch;max-width:1400px;margin:0 auto;width:100%;}
+main#grid.staffgrid .tile:nth-child(n+5){grid-column:span 2;}
 .tile{background:rgba(255,255,255,.80);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);border:1.5px solid rgba(155,28,49,.18);border-radius:var(--radius);box-shadow:0 4px 14px rgba(90,15,31,.12);display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;gap:1vh;cursor:pointer;position:relative;color:var(--text);padding:2.4vh 1.6vw 2.2vh;text-align:left;transition:transform .14s,box-shadow .14s,border-color .14s;}
 .tile:hover,.tile:focus-visible{transform:translateY(-4px);box-shadow:0 12px 26px rgba(90,15,31,.22);border-color:var(--gold);outline:3px solid var(--gold);}
 .icon-wrap{width:17vh;height:17vh;max-width:150px;max-height:150px;border-radius:46% 54% 52% 48% / 52% 46% 54% 48%;display:flex;align-items:center;justify-content:center;background:rgba(251,232,236,.9);margin:auto;}
@@ -103,6 +104,30 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .formppid-imgs{display:flex;justify-content:center;align-items:flex-start;gap:2vw;}
 .formppid-imgs img{height:calc(90vh - 6vh - clamp(22px,3.4vh,32px) - 2.2vh - 64px - 1.6vh);max-width:48%;width:auto;object-fit:contain;border-radius:10px;box-shadow:0 6px 16px rgba(0,0,0,.2);background:#fff;}
 #printArea,#printReport{display:none;}
+.fb-wrap{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:2vw;align-items:start;}
+@media (max-width:900px){.fb-wrap{grid-template-columns:1fr}}
+.fb-form{gap:10px;} .fb-hint{font-weight:600;color:var(--sub);font-size:12px;}
+.fb-tree{max-height:34vh;overflow:auto;border:1px solid #e0c4ca;border-radius:12px;padding:6px;background:#fff;}
+.fb-grp{border-bottom:1px solid #f1e4e7;} .fb-grp:last-child{border-bottom:none;}
+.fb-grp summary{display:flex;align-items:center;gap:8px;padding:7px 6px;cursor:pointer;font-weight:800;color:#7a1428;font-size:14px;list-style:none;}
+.fb-grp summary::-webkit-details-marker{display:none;}
+.fb-grp summary:before{content:'▸';color:var(--gold-dark);} .fb-grp[open] summary:before{content:'▾';}
+.fb-cnt{margin-left:auto;font-size:11.5px;background:var(--gold);color:#3b0a14;border-radius:999px;padding:1px 8px;} .fb-cnt:empty{display:none;}
+.fb-subs{display:grid;grid-template-columns:1fr 1fr;gap:2px 10px;padding:2px 8px 8px 30px;}
+.fb-sub{display:flex !important;gap:7px;align-items:flex-start;font-size:13px !important;font-weight:600 !important;color:var(--text) !important;margin:0 !important;padding:3px 0;cursor:pointer;}
+.fb-sub input,.fb-all input{width:16px !important;height:16px;margin-top:1px;accent-color:var(--red);flex:0 0 auto;padding:0 !important;}
+.fb-all{margin:0 !important;display:flex !important;}
+.fb-picked{margin-top:6px;font-size:12.5px;color:var(--sub);display:flex;flex-direction:column;gap:2px;} .fb-picked b{color:var(--red);}
+.fb-side{background:#fbf3f5;border:1px solid #eadde0;border-radius:14px;padding:14px;}
+.fb-filter{font-size:13px;font-weight:700;color:var(--sub);margin-bottom:8px;} .fb-filter input{accent-color:var(--red);}
+.fb-list{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:8px;}
+.fb-item{background:#fff;border:1px solid #eadde0;border-radius:10px;padding:9px 11px;}
+.fb-top{display:flex;justify-content:space-between;gap:8px;align-items:center;font-size:13.5px;}
+.fb-st{font-size:11px;font-weight:800;border-radius:999px;padding:2px 9px;white-space:nowrap;}
+.fb-st.no{background:#fde2e1;color:#9b1c31;} .fb-st.wait{background:#fff4d6;color:#8a5a00;} .fb-st.ok{background:#dcf5e3;color:#166534;} .fb-st.skip{background:#eee;color:#555;} .fb-st.pend{background:#e7ecf7;color:#2c4a8a;}
+.fb-meta{font-size:11.5px;color:var(--sub);margin:3px 0;} .fb-txt{font-size:13px;line-height:1.4;}
+.fb-ket{margin-top:6px;font-size:12.5px;background:#f6fbf7;border-left:3px solid #16a34a;padding:4px 8px;border-radius:4px;}
+
 .pd-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
 .pd-bar .print-btn{text-decoration:none;display:inline-flex;align-items:center;}
 .pd-ver{margin-right:auto;font-size:14px;color:var(--sub);} .pd-ver b{color:var(--red);}
@@ -440,7 +465,7 @@ function toast(msg){
 
 function renderGrid(){
   const grid = document.getElementById('grid');
-  const list = isStaff ? [ABSEN_ITEM, JADWAL_ITEM, REKAP_ITEM, MONITOR_ITEM, PANDUAN_ITEM] : SERVICES;
+  const list = isStaff ? [ABSEN_ITEM, MONITOR_ITEM, JADWAL_ITEM, REKAP_ITEM, PANDUAN_ITEM, FEEDBACK_ITEM] : SERVICES;
   grid.className = isStaff ? 'staffgrid' : (list.length > 8 ? 'rows5' : '');
   grid.innerHTML = '';
   list.forEach((svc, idx)=>{
@@ -453,7 +478,7 @@ function renderGrid(){
     const iconHtml = svc.img ? `<img src="data:image/png;base64,${svc.img}" alt="" class="tile-icon-img">` : `<div class="icon">${svc.icon}</div>`;
     btn.innerHTML = `<button class="speak-btn" aria-label="Dengarkan ${svc.title}" onclick="event.stopPropagation();speak('${svc.title.replace(/'/g,"\\'")}')">🔊</button>
       <div class="icon-wrap">${iconHtml}</div><div class="label">${svc.title}</div><span class="tile-arrow" aria-hidden="true">→</span>`;
-    btn.addEventListener('click', ()=>{ if(svc.form||svc.monitor||svc.schedule||svc.hadir||svc.rekap||svc.panduan) openStaff(svc); else openModal(svc); });
+    btn.addEventListener('click', ()=>{ if(svc.form||svc.monitor||svc.schedule||svc.hadir||svc.rekap||svc.panduan||svc.feedback) openStaff(svc); else openModal(svc); });
     btn.addEventListener('focus', ()=>{ if(voiceMode) speak(svc.title); });
     btn.addEventListener('mouseenter', ()=>{ if(voiceMode) speak(svc.title); });
     grid.appendChild(btn);
@@ -874,6 +899,7 @@ function openStaff(item){
   else if(item.rekap){ body.innerHTML = rekapHTML(); bindRekap(); }
   else if(item.hadir){ openHadir(); }
   else if(item.panduan){ openPanduan(); }
+  else if(item.feedback){ openFeedback(); }
   document.getElementById('overlay').classList.remove('hidden');
   document.getElementById('modalBox').scrollTop = 0;
 }
@@ -1212,6 +1238,85 @@ CONFIG.HADIR_WEBHOOK_URL = (CONFIG.HADIR_WEBHOOK_URL || '').trim() || 'https://s
 const HADIR_ITEM = {icon:'🧾', title:'Daftar Hadir Pemohon', hadir:true};
 const REKAP_ITEM = {icon:'📚', title:'Rekap Daftar Hadir Pemohon', rekap:true};
 const PANDUAN_ITEM = {icon:'📘', title:'Buku Panduan Aplikasi PTSP', panduan:true};
+/* ================= FEEDBACK APLIKASI ================= */
+const FEEDBACK_ITEM = {icon:'💬', title:'Feedback Aplikasi', feedback:true};
+const FB_KEY = 'kpu_feedback_pending';
+const FB_STATUS_CLS = {'Belum diproses':'no','Sedang diproses':'wait','Selesai':'ok','Tidak ditindaklanjuti':'skip'};
+const FB_FITUR = {title:'Fitur Lain Aplikasi', items:['Daftar Hadir Pemohon','Panel Antrean','SKM','Mode Suara','Absensi Piket','Monitoring Absensi','Jadwal Piket','Rekap Daftar Hadir Pemohon','Buku Panduan Aplikasi PTSP','Layar TV Antrean','Tampilan / lainnya']};
+function fbPetugas(){ return [...new Set(Object.values(SCHEDULE).flatMap(d=>Object.values(d).flat()))].sort((a,b)=>a.localeCompare(b,'id')); }
+function fbPending(){ try{ return JSON.parse(localStorage.getItem(FB_KEY)||'[]'); }catch(e){ return []; } }
+function fbSavePending(a){ try{ localStorage.setItem(FB_KEY, JSON.stringify(a)); }catch(e){} }
+async function fbSend(rec){
+  if(!CONFIG.HADIR_WEBHOOK_URL) return false;
+  try{ const r=await fetch(CONFIG.HADIR_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify({action:'feedback',record:rec})}); const j=await r.json(); return !!(j&&j.ok); }catch(e){ return false; }
+}
+async function fbFlush(){ const left=[]; for(const r of fbPending()){ if(!(await fbSend(r))) left.push(r); } fbSavePending(left); }
+async function fbLoad(){
+  if(!CONFIG.HADIR_WEBHOOK_URL) return null;
+  try{ const sep=CONFIG.HADIR_WEBHOOK_URL.includes('?')?'&':'?'; const r=await fetch(CONFIG.HADIR_WEBHOOK_URL+sep+'action=feedbackList&t='+Date.now()); const j=await r.json(); return Array.isArray(j)?j:null; }catch(e){ return null; }
+}
+function fbGroupHTML(g, gi){
+  return `<details class="fb-grp"${gi===0?' open':''}><summary><label class="fb-all" onclick="event.stopPropagation()"><input type="checkbox" data-g="${gi}"> </label><span>${esc(g.title)}</span><b class="fb-cnt" data-c="${gi}"></b></summary>
+    <div class="fb-subs">${g.items.map(it=>`<label class="fb-sub"><input type="checkbox" data-gi="${gi}" value="${esc(it)}"><span>${esc(it)}</span></label>`).join('')}</div></details>`;
+}
+async function openFeedback(){
+  const body=document.getElementById('modalBody'); body.style.cssText='display:block;height:auto;';
+  const groups=[...SERVICES.map(s=>({title:s.title, items:s.items.map(i=>i.label)})), FB_FITUR];
+  let saved=''; try{ saved=localStorage.getItem('kpu_fb_nama')||''; }catch(e){}
+  body.innerHTML=`<div class="fb-wrap">
+    <form class="absen fb-form" id="fbForm" autocomplete="off">
+      <div><label>Nama Petugas</label><select id="fbNama" required><option value="">— Pilih nama petugas —</option>${fbPetugas().map(n=>`<option ${n===saved?'selected':''}>${esc(n)}</option>`).join('')}</select></div>
+      <div><label>Menu Layanan &amp; Sub Menu <span class="fb-hint">(boleh lebih dari satu)</span></label>
+        <div class="fb-tree" id="fbTree">${groups.map(fbGroupHTML).join('')}</div>
+        <div class="fb-picked" id="fbPicked">Belum ada menu dipilih</div></div>
+      <div><label>Feedback</label><textarea id="fbText" required style="min-height:90px" placeholder="Tuliskan kendala, saran, atau usulan perbaikan. Contoh: Tombol cetak Formulir PPID kadang tidak muncul di layar sentuh."></textarea></div>
+      <button type="submit" class="submit-btn" id="fbGo">Kirim Feedback</button>
+    </form>
+    <div class="fb-side"><div class="hadir-side-title">Riwayat Feedback <span id="fbCount">…</span></div>
+      <div class="fb-filter"><label><input type="checkbox" id="fbMine"> Hanya milik saya</label></div>
+      <div id="fbList" class="fb-list"><p class="hadir-empty">Memuat…</p></div></div>
+  </div>`;
+  const tree=document.getElementById('fbTree');
+  const groupsEl=[...tree.querySelectorAll('.fb-grp')];
+  const picked=()=>groups.map((g,gi)=>({g:g.title, subs:[...tree.querySelectorAll(`input[data-gi="${gi}"]:checked`)].map(x=>x.value)})).filter(x=>x.subs.length);
+  const refresh=()=>{
+    groups.forEach((g,gi)=>{ const all=tree.querySelectorAll(`input[data-gi="${gi}"]`), on=tree.querySelectorAll(`input[data-gi="${gi}"]:checked`);
+      const head=tree.querySelector(`input[data-g="${gi}"]`); head.checked=on.length===all.length; head.indeterminate=on.length>0&&on.length<all.length;
+      tree.querySelector(`[data-c="${gi}"]`).textContent=on.length?`${on.length} dipilih`:''; });
+    const p=picked(); document.getElementById('fbPicked').innerHTML=p.length?p.map(x=>`<span><b>${esc(x.g.replace('Layanan ',''))}</b>: ${x.subs.map(esc).join(', ')}</span>`).join(''):'Belum ada menu dipilih';
+  };
+  tree.addEventListener('change',e=>{ const g=e.target.dataset.g; if(g!==undefined){ tree.querySelectorAll(`input[data-gi="${g}"]`).forEach(x=>x.checked=e.target.checked); } refresh(); });
+  refresh();
+  const renderList=async()=>{
+    const wrap=document.getElementById('fbList'); const nama=document.getElementById('fbNama').value; const mine=document.getElementById('fbMine').checked;
+    let rows=await fbLoad(); const pend=fbPending().map(r=>Object.assign({},r,{status:'Menunggu terkirim'}));
+    if(rows===null && !pend.length){ wrap.innerHTML='<p class="hadir-empty">Riwayat belum dapat dimuat (periksa internet).</p>'; document.getElementById('fbCount').textContent='–'; return; }
+    rows=[...pend, ...((rows||[]).slice().reverse())];
+    if(mine && nama) rows=rows.filter(r=>r.nama===nama);
+    document.getElementById('fbCount').textContent=rows.length;
+    wrap.innerHTML=rows.length?rows.slice(0,40).map(r=>`<div class="fb-item"><div class="fb-top"><b>${esc(r.nama)}</b><span class="fb-st ${FB_STATUS_CLS[r.status]||'pend'}">${esc(r.status)}</span></div>
+      <div class="fb-meta">${esc(r.tanggal||'')} ${esc(r.jam||'')} · ${esc(r.menu||'-')}</div><div class="fb-txt">${esc(r.feedback)}</div>
+      ${r.keterangan?`<div class="fb-ket"><b>Admin:</b> ${esc(r.keterangan)}</div>`:''}</div>`).join(''):'<p class="hadir-empty">Belum ada feedback.</p>';
+  };
+  document.getElementById('fbMine').addEventListener('change',renderList);
+  document.getElementById('fbNama').addEventListener('change',e=>{ try{ localStorage.setItem('kpu_fb_nama',e.target.value); }catch(_){} if(document.getElementById('fbMine').checked) renderList(); });
+  document.getElementById('fbForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const p=picked(); if(!p.length){ toast('Pilih minimal satu menu atau sub menu.'); return; }
+    const btn=document.getElementById('fbGo'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Mengirim...';
+    const n=new Date();
+    const rec={id:'F'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), nama:document.getElementById('fbNama').value,
+      menu:p.map(x=>`${x.g}: ${x.subs.join(', ')}`).join(' | '), feedback:document.getElementById('fbText').value.trim(),
+      tanggal:isoDate(n), jam:jamSekarang()};
+    const ok=await fbSend(rec);
+    if(!ok){ const a=fbPending(); a.push(rec); fbSavePending(a); }
+    toast(ok?'Terima kasih, feedback terkirim ke admin.':'Feedback disimpan di perangkat dan dikirim otomatis saat internet tersedia.');
+    document.getElementById('fbText').value=''; tree.querySelectorAll('input[type=checkbox]').forEach(x=>{x.checked=false;x.indeterminate=false;}); refresh();
+    btn.disabled=false; btn.textContent='Kirim Feedback'; renderList();
+  });
+  await fbFlush(); renderList();
+}
+
 // File PDF diletakkan di folder yang sama dengan Index.html (repo GitHub). Ganti nama/versi di sini saat panduan diperbarui.
 const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', versi:'Edisi 1.2', tanggal:'2 November 2026', catatan:[
   'Panel antrean: label baru Sedang Dilayani, Nomor Antrean Berikutnya, dan Jumlah Antrean',
