@@ -144,7 +144,11 @@ $('audio').addEventListener('click',()=>{ audioOn=true; try{ if(!actx) actx=new 
 function chime(){ if(!audioOn||!actx) return; try{ [0,.32,.64].forEach((t,i)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value=[659,784,1047][i]; o.connect(g); g.connect(actx.destination);
   const s=actx.currentTime+t; g.gain.setValueAtTime(.0001,s); g.gain.exponentialRampToValueAtTime(.35,s+.03); g.gain.exponentialRampToValueAtTime(.0001,s+.9); o.start(s); o.stop(s+.95); }); }catch(e){} }
 const ANGKA=['nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan'];
-function umumkan(t){
+let terakhirUmum={kode:'',w:0};
+function umumkan(t, paksa){
+  // cegah pengumuman ganda nomor yang sama dalam 20 detik (kecuali Panggil Ulang)
+  if(!paksa && terakhirUmum.kode===String(t.kode) && Date.now()-terakhirUmum.w<20000) return;
+  terakhirUmum={kode:String(t.kode), w:Date.now()};
   chime(); if(!audioOn||!('speechSynthesis' in window)) return;
   const eja = String(t.kode).split('').map(c=>ANGKA[+c]||c).join(' ');
   const teks = `Nomor antrean, ${eja}. Silakan menuju meja pelayanan.`;
@@ -152,7 +156,7 @@ function umumkan(t){
 }
 
 // ---------- data ----------
-let data=null, open=false, hbLocal=0, calledOrder=[], lastMain=null, firstLoad=true;
+let data=null, open=false, hbLocal=0, calledOrder=[], lastMain=null, firstLoad=true, lastUlang=null;
 function apply(root,path,val){ const p=String(path||'/').split('/').filter(Boolean); if(!p.length) return val; root=(root&&typeof root==='object')?root:{}; let o=root;
   for(let i=0;i<p.length-1;i++){ if(!o[p[i]]||typeof o[p[i]]!=='object') o[p[i]]={}; o=o[p[i]]; } if(val===null) delete o[p.at(-1)]; else o[p.at(-1)]=val; return root; }
 function tickets(){
@@ -180,6 +184,10 @@ function render(){
     big.textContent='–'; big.classList.add('empty'); $('svc').style.visibility='hidden';
     $('go').textContent = wait.length ? 'Mohon menunggu, nomor Anda akan segera dipanggil' : 'Silakan ambil nomor antrean di meja resepsionis'; $('also').textContent='';
   }
+  // panggil ulang dari PTSP: /ulang = {kode, ts}
+  if(data){ const ul=data.ulang, ts=(ul&&ul.ts)||0;
+    if(lastUlang===null) lastUlang=ts;                       // data pertama: jangan umumkan panggilan lama
+    else if(ts!==lastUlang){ lastUlang=ts; if(ul&&ul.kode){ const n=$('now'); n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash'); umumkan({kode:String(ul.kode)}, true); } } }
   lastMain=main?main.kode:null;
   const nx=wait[0];
   $('nextNo').textContent=nx?nx.kode:'–'; $('nextSvc').textContent=nx?(LAYANAN[nx.k]||nx.layanan||''):'Belum ada antrean menunggu';
@@ -190,22 +198,24 @@ function render(){
   $('off').classList.toggle('show', !data && !on);
   firstLoad=false;
 }
-let es=null;
+let es=null, sinyal=0;
 function connect(){
   if(es) try{ es.close(); }catch(e){}
-  es=new EventSource(`${FIREBASE_URL}/${FIREBASE_PATH}.json`);
-  const on=(ev,patch)=>{ let m; try{ m=JSON.parse(ev.data); }catch(e){ return; } if(!m) return;
+  es=new EventSource(`${FIREBASE_URL}/${FIREBASE_PATH}.json`); sinyal=Date.now();
+  const on=(ev,patch)=>{ sinyal=Date.now(); let m; try{ m=JSON.parse(ev.data); }catch(e){ return; } if(!m) return;
     if(patch&&m.data&&typeof m.data==='object') Object.entries(m.data).forEach(([k,v])=>{ data=apply(data,(m.path==='/'?'':m.path)+'/'+k,v); });
     else data=apply(data,m.path,m.data);
     if(String(m.path).startsWith('/hb')||(m.data&&typeof m.data==='object'&&'hb' in m.data)) hbLocal=Date.now();
     open=true; render(); };
   es.addEventListener('put',e=>on(e,false)); es.addEventListener('patch',e=>on(e,true));
-  es.addEventListener('keep-alive',()=>{ open=true; });
-  es.addEventListener('open',()=>{ open=true; render(); });
+  es.addEventListener('keep-alive',()=>{ open=true; sinyal=Date.now(); });
+  es.addEventListener('open',()=>{ open=true; sinyal=Date.now(); render(); });
   es.addEventListener('error',()=>{ open=(es.readyState===1); render(); });
 }
 connect();
-setInterval(()=>{ render(); if(es&&es.readyState===2) connect(); }, 5000);
+// koneksi dibuka ulang otomatis bila 60 detik tanpa sinyal (mis. Wi-Fi sempat putus / PC habis sleep)
+setInterval(()=>{ render(); if(es&&(es.readyState===2||Date.now()-sinyal>60000)) connect(); }, 5000);
+window.addEventListener('online',()=>connect());
 // muat ulang otomatis tiap pergantian hari (pukul 00.05)
 setInterval(()=>{ const n=new Date(); if(n.getHours()===0&&n.getMinutes()===5) location.reload(); }, 60000);
 render();

@@ -206,6 +206,16 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 .qhead.off .qh-v{opacity:.55;}
 .aq-pick{display:flex;flex-wrap:wrap;gap:6px;align-items:center;background:#fbf3f5;border:1px dashed #e0c4ca;border-radius:12px;padding:8px 10px;}
 .aq-pick>span{font-size:12px;font-weight:800;color:var(--sub);margin-right:4px;}
+.hq-call{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:linear-gradient(150deg,#fff7e3,#fdeedd);border:1.5px solid #f0c987;border-radius:14px;padding:10px 12px;margin-bottom:12px;}
+.hq-now{display:flex;flex-direction:column;line-height:1.15;margin-right:auto;}
+.hq-now small{font-size:12px;font-weight:700;color:#8a5a00;text-transform:uppercase;letter-spacing:.04em;}
+.hq-now b{font-size:24px;color:var(--red);}
+.hq-now i{font-style:normal;font-size:13px;color:#6b4b52;}
+.hq-btn{border:0;border-radius:999px;padding:11px 18px;font-weight:800;font-size:15px;cursor:pointer;white-space:nowrap;}
+.hq-next{background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;box-shadow:0 3px 10px rgba(122,20,40,.3);}
+.hq-again{background:#fff;color:var(--red);border:1.5px solid #e0c4ca;}
+.hq-btn:disabled{opacity:.45;cursor:not-allowed;box-shadow:none;}
+.hq-hint{flex-basis:100%;font-size:12.5px;color:#8a5a00;}
 .aq-chip{border:1.5px solid #e0c4ca;background:#fff;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;cursor:pointer;color:var(--text);}
 .aq-chip b{color:var(--red);}
 .aq-chip.on{border-color:var(--gold);background:#fff7e3;}
@@ -1531,8 +1541,9 @@ function renderHadir(all){
   const list = todays.length ? `<table class="monitor-table hadir-today"><thead><tr><th>No. Antrian</th><th>Nama</th><th>Jenis Layanan</th><th>Status Pelayanan</th></tr></thead><tbody>
       ${todays.map(r=>`<tr><td><b>${esc(r.noAntrian)}</b></td><td>${esc(r.nama)}</td><td>${esc(r.jenisLayanan)}</td><td>${r.status?esc(statusText(r)):'<span class="badge warn" style="margin:0">Sedang dilayani</span>'}</td></tr>`).join('')}
     </tbody></table>` : `<p class="hadir-empty">Belum ada pemohon tercatat hari ini.</p>`;
-  body.innerHTML = `${offline}<div class="hadir-wrap"><div class="hadir-main">${top}</div>
+  body.innerHTML = `${offline}<div class="hadir-wrap"><div class="hadir-main"><div id="hadirCall"></div>${top}</div>
     <div class="hadir-side"><div class="hadir-side-title">Pemohon Hari Ini · ${esc(tglSaja(today))} <span>${todays.length} orang</span></div>${list}</div></div>`;
+  renderHadirCall();
   if(pending.length) bindStatusForm(pending[0]);
   else if(mode==='kosong') document.getElementById('hManual').addEventListener('click', ()=>{ HADIR_MANUAL=true; renderHadir(hadirLocal().map(normHadir)); });
   else {
@@ -1944,8 +1955,55 @@ async function antreanCmd(kode, status){
   t.status = status; renderAntreanBar();
   try{ await fetch(fbUrl('/cmds'), {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({kode, status, ts:{'.sv':'timestamp'}})}); }catch(e){}
 }
+/* ---------- Tombol PANGGIL dari PTSP (di jendela Daftar Hadir) ----------
+   Panggil Berikutnya : nomor yang sedang dilayani -> selesai, nomor menunggu terkecil -> dipanggil.
+   Panggil Ulang      : mengumumkan ulang nomor yang sedang dilayani di Layar TV.
+   Perintah dikirim lewat Firebase; server antrean & Layar TV ikut berubah dalam 1-2 detik. */
+let PANGGIL_SIBUK = false;
+function renderHadirCall(){
+  const el = document.getElementById('hadirCall'); if(!el) return;
+  if(!CONFIG.FIREBASE_URL || !antreanTerhubung()){ el.innerHTML = ''; return; }
+  const tk = antreanTiket(), dilayani = tk.filter(x=>x.status==='dipanggil'), menunggu = tk.filter(x=>x.status==='menunggu');
+  const todays = hadirLocal().map(normHadir).filter(r=>r.tanggal===isoDate(new Date()));
+  const belumStatus = todays.find(r=>!r.status);
+  const cur = dilayani[dilayani.length-1], nx = menunggu[0];
+  const lay = t => esc((jenisDariKode(t.k)||t.layanan||'').replace('Layanan ',''));
+  let hint = '';
+  if(belumStatus) hint = `Isi <b>Status Pelayanan</b> No. ${esc(belumStatus.noAntrian)} terlebih dahulu sebelum memanggil nomor berikutnya.`;
+  else if(!nx) hint = 'Belum ada antrean yang menunggu.';
+  el.innerHTML = `<div class="hq-call">
+    <div class="hq-now"><small>Sedang dilayani</small><b>${cur ? esc(cur.kode) : '–'}</b><i>${cur ? lay(cur) : 'Belum ada nomor dipanggil'}</i></div>
+    <button type="button" class="hq-btn hq-again" id="hqAgain" ${cur && !PANGGIL_SIBUK ? '' : 'disabled'}>🔁 Panggil Ulang</button>
+    <button type="button" class="hq-btn hq-next" id="hqNext" ${nx && !belumStatus && !PANGGIL_SIBUK ? '' : 'disabled'}>📢 Panggil Berikutnya${nx ? ' · ' + esc(nx.kode) : ''}</button>
+    ${hint ? `<div class="hq-hint">${hint}</div>` : ''}</div>`;
+  document.getElementById('hqNext').onclick = () => panggilBerikutnya();
+  document.getElementById('hqAgain').onclick = () => panggilUlang(cur);
+}
+async function panggilBerikutnya(){
+  if(PANGGIL_SIBUK) return;
+  const tk = antreanTiket(), dilayani = tk.filter(x=>x.status==='dipanggil'), nx = tk.find(x=>x.status==='menunggu');
+  if(!nx) return toast('Belum ada antrean yang menunggu.');
+  const todays = hadirLocal().map(normHadir).filter(r=>r.tanggal===isoDate(new Date()));
+  if(todays.some(r=>!r.status)) return toast('Isi Status Pelayanan pemohon sebelumnya terlebih dahulu.');
+  const belumDicatat = dilayani.filter(t=>!todays.some(r=>r.noAntrian===t.kode));
+  if(belumDicatat.length && !confirm(`Nomor ${belumDicatat.map(t=>t.kode).join(', ')} belum dicatat di Daftar Hadir.\n\nLewati nomor tersebut dan panggil nomor ${nx.kode}?`)) return;
+  PANGGIL_SIBUK = true; renderHadirCall();
+  try{
+    for(const t of dilayani) await antreanCmd(t.kode, 'selesai');
+    await antreanCmd(nx.kode, 'dipanggil');
+    toast(`Memanggil nomor ${nx.kode}…`);
+    if(voiceMode) speak('Memanggil nomor antrean ' + nx.kode.split('').join(' '));
+  } finally { setTimeout(()=>{ PANGGIL_SIBUK = false; renderHadirCall(); }, 2500); }
+}
+async function panggilUlang(t){
+  if(!t || PANGGIL_SIBUK) return;
+  PANGGIL_SIBUK = true; renderHadirCall();
+  try{ await fetch(fbUrl('/ulang'), {method:'PUT', headers:{'Content-Type':'application/json'}, body: JSON.stringify({kode:t.kode, ts:{'.sv':'timestamp'}})}); toast(`Nomor ${t.kode} dipanggil ulang di Layar TV.`); }
+  catch(e){ toast('Gagal memanggil ulang. Periksa koneksi internet.'); }
+  finally { setTimeout(()=>{ PANGGIL_SIBUK = false; renderHadirCall(); }, 4000); }
+}
 function renderAntreanBar(){
-  hadirAutoRefresh();
+  hadirAutoRefresh(); renderHadirCall();
   const bar = document.getElementById('queueBar');
   if(!CONFIG.FIREBASE_URL){ bar.hidden = true; return; }
   bar.hidden = false;
