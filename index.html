@@ -1351,22 +1351,24 @@ async function openFeedback(){
 }
 
 // File PDF diletakkan di folder yang sama dengan Index.html (repo GitHub). Ganti nama/versi di sini saat panduan diperbarui.
-const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', versi:'Edisi 1.2', tanggal:'2 November 2026', catatan:[
-  'Panel antrean: label baru Sedang Dilayani, Nomor Antrean Berikutnya, dan Jumlah Antrean',
-  'Mode Petugas: susunan baru 4 menu di atas dan 2 menu di bawah, menu baru Buku Panduan Aplikasi PTSP dan Feedback Aplikasi',
-  'Satu Peta Data KPU (Pemilu & Pilkada 2024), Dokumen Badan Adhoc, dan Surat Keterangan Pernah Menjadi Badan Adhoc',
-  'Daftar Hadir mengikuti tiket antrean; opsi Catat Tanpa Tiket (nomor M01, M02, ...)']};
+const PANDUAN = {file:'Buku_Panduan_PTSP_KPU_Pacitan.pdf', web:'panduan.html', versi:'Edisi 1.2', tanggal:'4 November 2026', catatan:[
+  'Panduan interaktif: cari kata kunci (misalnya “antrean”) dan langsung menuju bagian panduan yang membahasnya',
+  'Tombol Panggil Berikutnya & Panggil Ulang di jendela Daftar Hadir (diumumkan di Layar TV)',
+  'Tombol WA Center di Mode Pemohon',
+  'Tombol Generate Cetak Infografis tanpa margin pada 7 infografis',
+  'Mode Petugas: 4 menu di atas dan 2 menu di bawah, menu baru Feedback Aplikasi',
+  'Panel antrean: Sedang Dilayani, Nomor Antrean Berikutnya, Jumlah Antrean; status Cek tanggal']};
 function openPanduan(){
   const body = document.getElementById('modalBody');
   body.style.cssText = 'display:block;height:auto;';
   body.innerHTML = `<div class="pd-bar">
       <div class="pd-ver"><b>${PANDUAN.versi}</b> · diperbarui ${PANDUAN.tanggal}</div>
-      <a class="print-btn" href="${PANDUAN.file}" target="_blank" rel="noopener">↗ Buka di tab baru</a>
+      <a class="print-btn" href="${PANDUAN.web}" target="_blank" rel="noopener">↗ Buka di tab baru</a>
       <a class="print-btn" href="${PANDUAN.file}" download>⬇️ Unduh PDF</a>
     </div>
     <details class="pd-new"><summary>Yang baru di ${PANDUAN.versi}</summary><ul>${PANDUAN.catatan.map(c=>`<li>${esc(c)}</li>`).join('')}</ul></details>
-    <iframe class="pd-frame" src="${PANDUAN.file}#view=FitH" title="Buku Panduan PTSP"></iframe>
-    <div class="hadir-note">Jika PDF tidak tampil, tekan <b>Buka di tab baru</b>.</div>`;
+    <iframe class="pd-frame" src="${PANDUAN.web}" title="Panduan Interaktif Aplikasi PTSP"></iframe>
+    <div class="hadir-note">Ketik kata kunci di kotak <b>Cari panduan</b>, misalnya “antrean” atau “panggil”. Jika panduan tidak tampil, tekan <b>Buka di tab baru</b>.</div>`;
 }
 document.getElementById('hadirBtn').addEventListener('click', ()=>openStaff(HADIR_ITEM));
 const HARI_ID = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
