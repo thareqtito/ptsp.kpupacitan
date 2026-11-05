@@ -1476,6 +1476,23 @@ function hadirAutoRefresh(){
     hadirAutoRefresh._t = setTimeout(()=>{ if(document.getElementById('hadirNoTicket')||document.getElementById('hManualLink')) renderHadir(hadirLocal().map(normHadir)); }, 50);
   }
 }
+function hadirSig(k){ return k.map(t=>t.kode+':'+t.status).join(','); }
+/* Form Daftar Hadir (mode tiket) mengikuti perubahan antrean tanpa perlu refresh:
+   mis. setelah "Panggil Berikutnya" atau ada tiket baru. Isian yang sudah diketik tetap dipertahankan. */
+function hadirSyncTiket(){
+  const f = document.getElementById('hadirForm');
+  if(!f || f.dataset.mode!=='tiket') return;
+  const todays = hadirLocal().map(normHadir).filter(r=>r.tanggal===isoDate(new Date()));
+  if(!antreanTerhubung() || hadirSig(antreanKandidat(todays)) === f.dataset.sig) return;
+  const ids = ['hNama','hAlamat','hWa','hEmail','hKeperluan'], val = {};
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el) val[id]=el.value; });
+  const fokus = document.activeElement && document.activeElement.id;
+  const pilihSendiri = f.dataset.manualPick || '';
+  renderHadir(hadirLocal().map(normHadir));
+  ids.forEach(id=>{ const el=document.getElementById(id); if(el && val[id]) el.value=val[id]; });
+  if(pilihSendiri){ const c=[...document.querySelectorAll('#hadirForm .aq-chip')].find(b=>b.dataset.kode===pilihSendiri); if(c){ c.click(); document.getElementById('hadirForm').dataset.manualPick=pilihSendiri; } }
+  if(fokus && document.getElementById(fokus)) document.getElementById(fokus).focus();
+}
 let HADIR_MANUAL = false; // petugas memilih "Catat Tanpa Tiket"
 function renderHadir(all){
   const body = document.getElementById('modalBody');
@@ -1524,7 +1541,7 @@ function renderHadir(all){
     const banner = mode==='manual'
       ? `<div class="hadir-warn">✍️ Pencatatan <b>tanpa tiket</b> — nomor ${manualNo} (awalan M). <a href="#" id="hManualBatal">Batal</a></div>`
       : mode==='offline' ? `<div class="hadir-warn">⚠️ Mesin antrean tidak terhubung. Isi <b>No. Urut Antrian sesuai nomor pada tiket</b> yang dipegang pemohon. Pemohon tanpa tiket? <a href="#" id="hManualLink">Catat tanpa tiket</a></div>` : '';
-    top = `${banner}<form class="absen" id="hadirForm" autocomplete="off">
+    top = `${banner}<form class="absen" id="hadirForm" autocomplete="off" data-mode="${mode}" data-sig="${esc(hadirSig(kandidat))}">
       <div class="row2">
         <div><label>Hari, Tanggal</label><input type="text" value="${esc(tglPanjang(today))}" readonly></div>
         <div style="max-width:220px"><label>No. Urut Antrian</label><input type="text" id="hNo" inputmode="numeric" maxlength="3" value="${mode==='manual'?manualNo:(mode==='offline'?'':nextNo)}" ${mode==='offline'?'placeholder="Nomor di tiket"':'readonly'} required>${mode==='tiket'?'<div class="hadir-note" style="margin-top:3px">Pilih dari tiket di bawah</div>':''}</div>
@@ -1561,6 +1578,7 @@ function bindHadirForm(todays, mode){
   const no=document.getElementById('hNo');
   f.querySelectorAll('.aq-chip').forEach(b=>b.addEventListener('click', ()=>{
     no.value = b.dataset.kode; if(b.dataset.jenis) document.getElementById('hJenis').value = b.dataset.jenis;
+    f.dataset.manualPick = b.classList.contains('on') ? '' : b.dataset.kode;   // pilihan manual petugas dipertahankan saat antrean berubah
     f.querySelectorAll('.aq-chip').forEach(x=>x.classList.toggle('sel', x===b));
     document.getElementById('hNama').focus();
   }));
@@ -1992,6 +2010,7 @@ async function panggilBerikutnya(){
   const belumDicatat = dilayani.filter(t=>!todays.some(r=>r.noAntrian===t.kode));
   if(belumDicatat.length && !confirm(`Nomor ${belumDicatat.map(t=>t.kode).join(', ')} belum dicatat di Daftar Hadir.\n\nLewati nomor tersebut dan panggil nomor ${nx.kode}?`)) return;
   PANGGIL_SIBUK = true; renderHadirCall();
+  { const f=document.getElementById('hadirForm'); if(f) f.dataset.manualPick=''; }   // nomor yang baru dipanggil langsung dipilih di form
   try{
     for(const t of dilayani) await antreanCmd(t.kode, 'selesai');
     await antreanCmd(nx.kode, 'dipanggil');
@@ -2007,7 +2026,7 @@ async function panggilUlang(t){
   finally { setTimeout(()=>{ PANGGIL_SIBUK = false; renderHadirCall(); }, 4000); }
 }
 function renderAntreanBar(){
-  hadirAutoRefresh(); renderHadirCall();
+  hadirAutoRefresh(); hadirSyncTiket(); renderHadirCall();
   const bar = document.getElementById('queueBar');
   if(!CONFIG.FIREBASE_URL){ bar.hidden = true; return; }
   bar.hidden = false;
