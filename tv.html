@@ -117,7 +117,7 @@ footer .tag{flex:0 0 auto;height:100%;display:flex;align-items:center;gap:.8vw;p
   </main>
   <footer>
     <div class="tag"><span class="dot" id="dot"></span><span id="live">OFFLINE</span></div>
-    <div class="marq"><div id="marq">Selamat datang di Pelayanan Publik Terintegrasi Satu Pintu KPU Kabupaten Pacitan &nbsp;•&nbsp; Ambil nomor antrean di meja resepsionis dan tunggu hingga nomor Anda dipanggil &nbsp;•&nbsp; Cek data pemilih Anda melalui cekdptonline.kpu.go.id atau WA Bot Pemilih &nbsp;•&nbsp; Setelah dilayani, mohon isi Survei Kepuasan Masyarakat melalui s.id/2026skmkpupacitan &nbsp;•&nbsp; Layanan ini tidak dipungut biaya &nbsp;•&nbsp; KPU Kabupaten Pacitan: Melayani dengan BerAKHLAK</div></div>
+    <div class="marq"><div id="marq">Selamat datang di Pelayanan Publik Terintegrasi Satu Pintu KPU Kabupaten Pacitan &nbsp;•&nbsp; Ambil nomor antrean di meja resepsionis dan tunggu hingga nomor Anda dipanggil &nbsp;•&nbsp; Cek data pemilih Anda melalui cekdptonline.kpu.go.id atau WA Bot Pemilih 085151111022 &nbsp;•&nbsp; Setelah dilayani, mohon isi Survei Kepuasan Masyarakat melalui s.id/2026skmkpupacitan &nbsp;•&nbsp; Layanan ini tidak dipungut biaya &nbsp;•&nbsp; KPU Kabupaten Pacitan: Melayani dengan BerAKHLAK</div></div>
   </footer>
   <div id="off"><div><b>Layar antrean belum tersambung</b>Menunggu data dari server antrean resepsionis…</div></div>
 </div>
@@ -144,6 +144,13 @@ $('audio').addEventListener('click',()=>{ audioOn=true; try{ if(!actx) actx=new 
 function chime(){ if(!audioOn||!actx) return; try{ [0,.32,.64].forEach((t,i)=>{ const o=actx.createOscillator(), g=actx.createGain(); o.type='sine'; o.frequency.value=[659,784,1047][i]; o.connect(g); g.connect(actx.destination);
   const s=actx.currentTime+t; g.gain.setValueAtTime(.0001,s); g.gain.exponentialRampToValueAtTime(.35,s+.03); g.gain.exponentialRampToValueAtTime(.0001,s+.9); o.start(s); o.stop(s+.95); }); }catch(e){} }
 const ANGKA=['nol','satu','dua','tiga','empat','lima','enam','tujuh','delapan','sembilan'];
+// Ucapan sesuai lafal bahasa Indonesia: mesin suara membaca "antrean" sebagai "antre-an",
+// jadi teks yang DIUCAPKAN ditulis menurut bunyinya ("an-tri-an"); tulisan di layar tetap "antrean".
+function ucap(t){ return String(t).replace(/antrean/gi, m => m[0]==='A' ? 'Antrian' : 'antrian'); }
+// pilih suara berbahasa Indonesia yang terpasang (utamakan suara Google/online yang lebih natural)
+let SUARA=null;
+function suaraID(){ if(SUARA) return SUARA; try{ const vs=speechSynthesis.getVoices().filter(v=>/^id([-_]|$)/i.test(v.lang)); SUARA=vs.find(v=>/google/i.test(v.name))||vs.find(v=>!v.localService)||vs[0]||null; }catch(e){} return SUARA; }
+try{ speechSynthesis.onvoiceschanged=()=>{ SUARA=null; suaraID(); }; }catch(e){}
 let terakhirUmum={kode:'',w:0};
 function umumkan(t, paksa){
   // cegah pengumuman ganda nomor yang sama dalam 20 detik (kecuali Panggil Ulang)
@@ -151,8 +158,8 @@ function umumkan(t, paksa){
   terakhirUmum={kode:String(t.kode), w:Date.now()};
   chime(); if(!audioOn||!('speechSynthesis' in window)) return;
   const eja = String(t.kode).split('').map(c=>ANGKA[+c]||c).join(' ');
-  const teks = `Nomor antrean, ${eja}. Silakan menuju meja pelayanan.`;
-  setTimeout(()=>{ try{ speechSynthesis.cancel(); for(let i=0;i<2;i++){ const u=new SpeechSynthesisUtterance(teks); u.lang='id-ID'; u.rate=.88; speechSynthesis.speak(u); } }catch(e){} }, 1500);
+  const teks = ucap(`Nomor antrean, ${eja}. Silakan menuju meja pelayanan.`);
+  setTimeout(()=>{ try{ speechSynthesis.cancel(); const v=suaraID(); for(let i=0;i<2;i++){ const u=new SpeechSynthesisUtterance(teks); u.lang='id-ID'; try{ if(v) u.voice=v; }catch(e){} u.rate=.9; speechSynthesis.speak(u); } }catch(e){} }, 1500);
 }
 
 // ---------- data ----------

@@ -457,8 +457,10 @@ function speak(text){
   try{
     if(!('speechSynthesis' in window)) return;
     window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+    // lafal Indonesia: "antrean" diucapkan "an-tri-an" (mesin suara membacanya "antre-an"); tulisan di layar tidak berubah
+    const u = new SpeechSynthesisUtterance(String(text).replace(/antrean/gi, m => m[0]==='A' ? 'Antrian' : 'antrian'));
     u.lang = 'id-ID'; u.rate = 0.98;
+    try{ const vs = window.speechSynthesis.getVoices().filter(v=>/^id([-_]|$)/i.test(v.lang)); const v = vs.find(v=>/google/i.test(v.name)) || vs.find(v=>!v.localService) || vs[0]; if(v) u.voice = v; }catch(e){}
     window.speechSynthesis.speak(u);
   }catch(e){}
 }
