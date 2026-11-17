@@ -55,6 +55,7 @@
 .jd-name.me i{background:var(--red);color:#fff;}
 .jd-note{margin-top:10px;font-size:13px;font-weight:600;color:var(--sub);}
 @media (max-width:760px){.jd-grid{grid-template-columns:1fr}.jd-h{display:none}.jd-day.out{display:none}}
+.badge-online{display:inline-block;margin-left:6px;background:#e6f0fd;color:#1d4ed8;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;vertical-align:middle;}
 .hadir-note{font-size:13px;color:var(--sub);font-weight:600;}
 .lp-btns{white-space:nowrap;}
 .mini-btn{background:#fff;border:1.5px solid var(--red);color:#7a1428;padding:5px 10px;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;margin:2px;}
@@ -417,7 +418,7 @@ function bindAbsenForm(){
   outEl.addEventListener('input', ()=>{ outEl.dataset.auto = '0'; });
   async function fillOutput(){
     const iso = tglInput.value; if(!iso) return;
-    const rows = (await loadHadir()).filter(r=>r.tanggal===iso).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
+    const rows = (await loadHadir()).filter(r=>r.tanggal===iso).sort((a,b)=>urutNo(a)-urutNo(b));
     if(outEl.dataset.auto !== '1' || tglInput.value !== iso) return;
     outEl.value = outputPiketText(rows);
   }
@@ -665,6 +666,11 @@ function tglSaja(iso){ const dt=isoToDate(iso); return `${dt.getDate()} ${MONTHS
 function jamSekarang(){ const n=new Date(); return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pad3(n){ return String(n).padStart(3,'0'); }
+// pelayanan online: nomor berawalan O (O01, O02, ...) dan/atau kolom kanal terisi
+function isOnline(r){ return !!(r && (/^O\d+$/.test(String(r.noAntrian||'')) || String(r.kanal||'').trim())); }
+function jenisTampil(r){ return String(r.jenisLayanan||'') + (isOnline(r) ? ` (Online${r.kanal ? ': '+r.kanal : ''})` : ''); }
+// urutan tampil: nomor tiket (001...), lalu tanpa tiket (M01...), lalu online (O01...)
+function urutNo(r){ const n=String(r.noAntrian||''), k=parseInt(n.replace(/^[A-Z]/i,''),10)||0; return /^O/i.test(n) ? 20000+k : /^M/i.test(n) ? 10000+k : k; }
 function statusText(r){ if(!r.status) return '—'; return r.status==='Lainnya' && r.keterangan ? `Lainnya: ${r.keterangan}` : r.status; }
 function loadScript(url){
   loadScript._c = loadScript._c || {};
@@ -770,7 +776,7 @@ function laporanData(iso){
   const d = window.__monData || {all:[], hadir:[]};
   const pt = petugasForDate(iso, d.all);
   const dt = isoToDate(iso);
-  const rows = d.hadir.filter(r=>r.tanggal===iso).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
+  const rows = d.hadir.filter(r=>r.tanggal===iso).sort((a,b)=>urutNo(a)-urutNo(b));
   const cnt = {'Selesai':0,'Sedang dalam proses PPID':0,'Lainnya':0,'Belum diisi':0};
   rows.forEach(r=>{ cnt[r.status||'Belum diisi']++; });
   return { iso, hari: HARI_ID[dt.getDay()], tanggal: tglSaja(iso), shift: (dt.getDay()>=1&&dt.getDay()<=5) ? getShiftForDate(dt) : '-',
@@ -791,6 +797,8 @@ function laporanHTML(L){
   <h4>A. Rekapitulasi Pelayanan</h4>
   <table class="lp-table" style="width:auto;min-width:60%"><tbody>
     <tr><td>Jumlah pemohon / penerima layanan</td><td style="text-align:center;width:70px"><b>${L.rows.length}</b></td></tr>
+    <tr><td>&nbsp;&nbsp;– Pelayanan offline (meja PTSP)</td><td style="text-align:center">${L.rows.filter(r=>!isOnline(r)).length}</td></tr>
+    <tr><td>&nbsp;&nbsp;– Pelayanan online</td><td style="text-align:center">${L.rows.filter(isOnline).length}</td></tr>
     <tr><td>Status: Selesai</td><td style="text-align:center">${L.cnt['Selesai']}</td></tr>
     <tr><td>Status: Sedang dalam proses PPID</td><td style="text-align:center">${L.cnt['Sedang dalam proses PPID']}</td></tr>
     <tr><td>Status: Lainnya</td><td style="text-align:center">${L.cnt['Lainnya']}</td></tr>
@@ -798,7 +806,7 @@ function laporanHTML(L){
   </tbody></table>
   <h4>B. Daftar Pelayanan</h4>
   <table class="lp-table"><thead><tr><th style="width:36px">No</th><th style="width:70px">No. Antrian</th><th>Jenis Layanan</th><th>Keperluan</th><th style="width:150px">Status Layanan</th></tr></thead><tbody>
-    ${L.rows.length ? L.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(r.noAntrian)}</td><td>${esc(r.jenisLayanan)}</td><td>${esc(r.keperluan)}</td><td>${esc(r.status?statusText(r):'Belum diisi')}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;font-style:italic">Tidak ada pemohon layanan pada hari ini.</td></tr>'}
+    ${L.rows.length ? L.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(r.noAntrian)}</td><td>${esc(jenisTampil(r))}</td><td>${esc(r.keperluan)}</td><td>${esc(r.status?statusText(r):'Belum diisi')}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;font-style:italic">Tidak ada pemohon layanan pada hari ini.</td></tr>'}
   </tbody></table>
   <div style="text-align:center;margin-top:34px;">Pacitan, ${esc(L.tanggal)}</div>
   <div class="lp-ttd">${sig.map((n,i)=>`<div><div>Petugas Piket ${i+1}</div><div class="sp"></div><div class="nm">${n?esc(n):'(.................................)'}</div></div>`).join('')}</div>`;
@@ -857,7 +865,7 @@ async function downloadLaporanWord(iso){
       new D.TableCell({borders:noB, width:DX(300), children:[P(T(':'))]}),
       new D.TableCell({borders:noB, width:DX(6806), children: String(v).split('\n').map(line=>P(T(line), /^\d+\.\s/.test(line)?{indent:{left:300, hanging:300}}:{}))}) ]})) });
     const H = t => P(T(t,{bold:true}),{spacing:{before:200, after:100}});
-    const rekapRows = [['Jumlah pemohon / penerima layanan', L.rows.length, true],['Status: Selesai', L.cnt['Selesai']],['Status: Sedang dalam proses PPID', L.cnt['Sedang dalam proses PPID']],['Status: Lainnya', L.cnt['Lainnya']]];
+    const rekapRows = [['Jumlah pemohon / penerima layanan', L.rows.length, true],['   – Pelayanan offline (meja PTSP)', L.rows.filter(r=>!isOnline(r)).length],['   – Pelayanan online', L.rows.filter(isOnline).length],['Status: Selesai', L.cnt['Selesai']],['Status: Sedang dalam proses PPID', L.cnt['Sedang dalam proses PPID']],['Status: Lainnya', L.cnt['Lainnya']]];
     if(L.cnt['Belum diisi']) rekapRows.push(['Status belum diisi', L.cnt['Belum diisi']]);
     const rekap = new D.Table({ width:DX(6240), columnWidths:[5000,1240], layout:FIX, rows: rekapRows.map(([k,v,b])=> new D.TableRow({children:[
       cell(k,{width:DX(5000)}), cell(P(T(v,{bold:!!b}),{alignment:D.AlignmentType.CENTER}),{width:DX(1240)}) ]})) });
@@ -866,7 +874,7 @@ async function downloadLaporanWord(iso){
     const th = (t,i) => cell(P(T(t,{bold:true}),{alignment:D.AlignmentType.CENTER}),{shading:thShade, width:DX(COLS[i])});
     const td = (c,i) => cell(c,{width:DX(COLS[i])});
     const center = t => P(T(t),{alignment:D.AlignmentType.CENTER});
-    const dataRows = L.rows.length ? L.rows.map((r,i)=> new D.TableRow({children:[ td(center(i+1),0), td(center(r.noAntrian),1), td(r.jenisLayanan,2), td(r.keperluan,3), td(r.status?statusText(r):'Belum diisi',4) ]}))
+    const dataRows = L.rows.length ? L.rows.map((r,i)=> new D.TableRow({children:[ td(center(i+1),0), td(center(r.noAntrian),1), td(jenisTampil(r),2), td(r.keperluan,3), td(r.status?statusText(r):'Belum diisi',4) ]}))
       : [ new D.TableRow({children:[ cell(P(T('Tidak ada pemohon layanan pada hari ini.',{italics:true}),{alignment:D.AlignmentType.CENTER}),{columnSpan:5, width:DX(9606)}) ]}) ];
     const daftar = new D.Table({ width:DX(9606), columnWidths:COLS, layout:FIX, rows:[ new D.TableRow({tableHeader:true, children:[th('No',0),th('No. Antrian',1),th('Jenis Layanan',2),th('Keperluan',3),th('Status Layanan',4)]}), ...dataRows ]});
     const sig = (L.names.length?L.names:['','']).slice(0,2); while(sig.length<2) sig.push('');
@@ -887,7 +895,7 @@ async function downloadLaporanWord(iso){
 }
 function outputPiketText(rows){
   if(!rows.length) return 'Tidak ada pemohon/penerima layanan pada hari ini.';
-  return `Melayani ${rows.length} pemohon/penerima layanan:\n` + rows.map((r,i)=>`${i+1}. No. Antrian ${r.noAntrian} – ${r.jenisLayanan}: ${r.keperluan} (Status: ${r.status?statusText(r):'belum diisi'})`).join('\n');
+  return `Melayani ${rows.length} pemohon/penerima layanan:\n` + rows.map((r,i)=>`${i+1}. No. ${r.noAntrian} – ${jenisTampil(r)}: ${r.keperluan} (Status: ${r.status?statusText(r):'belum diisi'})`).join('\n');
 }
 /* ---------- Pengingat absensi pukul 16.00 ---------- */
 CONFIG.ABSEN_REMINDER = '16:00';

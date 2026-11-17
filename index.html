@@ -239,6 +239,11 @@ footer{flex:0 0 auto;min-height:60px;display:flex;align-items:center;justify-con
 
 #hadirForm{gap:8px;}
 #hadirForm input,#hadirForm select,#hadirForm textarea{padding:8px 10px;}
+.hm-seg{display:flex;gap:6px;background:#f6eef0;border:1px solid #eadde0;border-radius:14px;padding:5px;margin-bottom:12px;}
+.hm-seg button{flex:1;border:0;background:transparent;border-radius:10px;padding:10px 12px;font-weight:800;font-size:14px;color:var(--sub);cursor:pointer;}
+.hm-seg button.on{background:linear-gradient(150deg,var(--red),var(--navy));color:#fff;box-shadow:0 3px 10px rgba(122,20,40,.25);}
+.hm-online-note{background:#eef6ff;border:1px solid #cfe2fb;color:#1e4b7a;border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600;}
+.badge-online{display:inline-block;margin-left:6px;background:#e6f0fd;color:#1d4ed8;border-radius:999px;padding:2px 8px;font-size:11px;font-weight:800;vertical-align:middle;}
 .hadir-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:2vw;align-items:start;}
 @media (max-width:900px){.hadir-wrap{grid-template-columns:1fr;}}
 .hadir-side{background:#fbf3f5;border:1px solid #eadde0;border-radius:14px;padding:14px;}
@@ -1034,7 +1039,7 @@ function bindAbsenForm(){
   outEl.addEventListener('input', ()=>{ outEl.dataset.auto = '0'; });
   async function fillOutput(){
     const iso = tglInput.value; if(!iso) return;
-    const rows = (await loadHadir()).filter(r=>r.tanggal===iso).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
+    const rows = (await loadHadir()).filter(r=>r.tanggal===iso).sort((a,b)=>urutNo(a)-urutNo(b));
     if(outEl.dataset.auto !== '1' || tglInput.value !== iso) return;
     outEl.value = outputPiketText(rows);
   }
@@ -1387,6 +1392,11 @@ function tglSaja(iso){ const dt=isoToDate(iso); return `${dt.getDate()} ${MONTHS
 function jamSekarang(){ const n=new Date(); return `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; }
 function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function pad3(n){ return String(n).padStart(3,'0'); }
+// pelayanan online: nomor berawalan O (O01, O02, ...) dan/atau kolom kanal terisi
+function isOnline(r){ return !!(r && (/^O\d+$/.test(String(r.noAntrian||'')) || String(r.kanal||'').trim())); }
+function jenisTampil(r){ return String(r.jenisLayanan||'') + (isOnline(r) ? ` (Online${r.kanal ? ': '+r.kanal : ''})` : ''); }
+// urutan tampil: nomor tiket (001...), lalu tanpa tiket (M01...), lalu online (O01...)
+function urutNo(r){ const n=String(r.noAntrian||''), k=parseInt(n.replace(/^[A-Z]/i,''),10)||0; return /^O/i.test(n) ? 20000+k : /^M/i.test(n) ? 10000+k : k; }
 function statusText(r){ if(!r.status) return '—'; return r.status==='Lainnya' && r.keterangan ? `Lainnya: ${r.keterangan}` : r.status; }
 function loadScript(url){
   loadScript._c = loadScript._c || {};
@@ -1459,6 +1469,7 @@ function petugasForDate(iso, absenAll){
 
 /* ---------- Form Daftar Hadir ---------- */
 async function openHadir(){
+  HADIR_ONLINE = false;
   const body = document.getElementById('modalBody');
   body.innerHTML = '<p style="text-align:center;padding:4vh 0;">Memuat daftar hadir...</p>';
   const [all] = await Promise.all([loadHadir(), pollAntrean()]);
@@ -1493,7 +1504,63 @@ function hadirSyncTiket(){
   if(pilihSendiri){ const c=[...document.querySelectorAll('#hadirForm .aq-chip')].find(b=>b.dataset.kode===pilihSendiri); if(c){ c.click(); document.getElementById('hadirForm').dataset.manualPick=pilihSendiri; } }
   if(fokus && document.getElementById(fokus)) document.getElementById(fokus).focus();
 }
-let HADIR_MANUAL = false; // petugas memilih "Catat Tanpa Tiket"
+let HADIR_MANUAL = false;
+let HADIR_ONLINE = false; // tab Pelayanan Online di Daftar Hadir (default: Pelayanan Offline / meja PTSP)
+const KANAL_ONLINE = ['WhatsApp / WA Center','Email','Telepon','Laman E-PPID / Website','Media Sosial','Lainnya'];
+function nomorOnline(all, iso){ return 'O' + String(all.filter(r=>r.tanggal===iso && /^O\d+$/.test(r.noAntrian)).reduce((m,r)=>Math.max(m, parseInt(r.noAntrian.slice(1),10)||0), 0) + 1).padStart(2,'0'); }
+function onlineFormHTML(all){
+  const today = isoDate(new Date());
+  return `<div class="hm-online-note">🌐 Untuk pelayanan yang diterima <b>secara online</b> (WhatsApp, email, telepon, E-PPID, media sosial) tanpa nomor antrean. Nomor otomatis berawalan <b>O</b> dan status pelayanan langsung diisi.</div>
+  <form class="absen" id="onlineForm" autocomplete="off" style="margin-top:10px">
+    <div class="row2">
+      <div><label>Tanggal Pelayanan</label><input type="date" id="oTgl" value="${today}" max="${today}" required></div>
+      <div style="max-width:220px"><label>No. Pelayanan Online</label><input type="text" id="oNo" value="${nomorOnline(all, today)}" readonly></div>
+    </div>
+    <div><label>Kanal Layanan Online</label><select id="oKanal" required><option value="">— Pilih kanal —</option>${KANAL_ONLINE.map(k=>`<option>${esc(k)}</option>`).join('')}</select></div>
+    <div><label>Nama Lengkap</label><input type="text" id="oNama" required></div>
+    <div><label>Alamat <span style="font-weight:600">(opsional)</span></label><textarea id="oAlamat" rows="2" style="min-height:44px"></textarea></div>
+    <div class="row2">
+      <div><label>No. WhatsApp / Telepon</label><input type="tel" id="oWa" inputmode="tel" placeholder="08xxxxxxxxxx"></div>
+      <div><label>Email</label><input type="email" id="oEmail" placeholder="nama@email.com"></div>
+    </div>
+    <div class="hadir-note" style="margin-top:-4px">Isi minimal salah satu: No. WhatsApp/Telepon atau Email.</div>
+    <div><label>Jenis Layanan</label><select id="oJenis" required><option value="">— Pilih jenis layanan —</option>${JENIS_LAYANAN.map(j=>`<option>${esc(j)}</option>`).join('')}</select></div>
+    <div><label>Keperluan</label><textarea id="oKeperluan" rows="2" style="min-height:54px" required placeholder="Tuliskan keperluan pemohon..."></textarea></div>
+    <div><label>Status Pelayanan</label>
+      <div class="status-opts">${STATUS_OPTS.map(st=>`<label class="status-opt"><input type="radio" name="oStatus" value="${esc(st)}" required><span>${esc(st)}</span></label>`).join('')}</div>
+    </div>
+    <div id="oKetWrap" hidden><label>Keterangan</label><textarea id="oKet" style="min-height:70px" placeholder="Tuliskan keterangan status pelayanan..."></textarea></div>
+    <button type="submit" class="submit-btn" id="oSubmit">Simpan Pelayanan Online</button>
+  </form>`;
+}
+function bindOnlineForm(){
+  const f=document.getElementById('onlineForm'), tgl=document.getElementById('oTgl'), no=document.getElementById('oNo');
+  const ketWrap=document.getElementById('oKetWrap'), ket=document.getElementById('oKet');
+  tgl.addEventListener('change', ()=>{ no.value = nomorOnline(hadirLocal().map(normHadir), tgl.value || isoDate(new Date())); });
+  f.querySelectorAll('input[name=oStatus]').forEach(r=>r.addEventListener('change', ()=>{
+    const lain = f.querySelector('input[name=oStatus]:checked').value==='Lainnya'; ketWrap.hidden=!lain; ket.required=lain; if(lain) ket.focus();
+  }));
+  f.addEventListener('submit', async e=>{
+    e.preventDefault();
+    const wa=document.getElementById('oWa').value.trim(), em=document.getElementById('oEmail').value.trim();
+    if(!wa && !em){ toast('Isi No. WhatsApp/Telepon atau Email pemohon.'); document.getElementById('oWa').focus(); return; }
+    const st=f.querySelector('input[name=oStatus]:checked');
+    if(!st){ toast('Pilih status pelayanan.'); return; }
+    if(st.value==='Lainnya' && !ket.value.trim()){ toast('Isi keterangan untuk status Lainnya.'); ket.focus(); return; }
+    const iso = tgl.value || isoDate(new Date());
+    const noVal = nomorOnline(hadirLocal().map(normHadir), iso);   // dihitung ulang saat simpan agar tidak bentrok
+    const btn=document.getElementById('oSubmit'); btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Menyimpan...';
+    const jam = jamSekarang();
+    const rec = { id: 'H'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+      tanggal: iso, hari: HARI_ID[isoToDate(iso).getDay()], noAntrian: noVal,
+      nama: document.getElementById('oNama').value.trim(), alamat: document.getElementById('oAlamat').value.trim() || '-',
+      wa: wa || '-', email: em, jenisLayanan: document.getElementById('oJenis').value, keperluan: document.getElementById('oKeperluan').value.trim(),
+      status: st.value, keterangan: st.value==='Lainnya' ? ket.value.trim() : '', waktuDaftar: jam, waktuSelesai: jam, kanal: document.getElementById('oKanal').value };
+    const where = await saveHadir(rec);
+    toast(where==='server' ? `Pelayanan online ${noVal} tercatat.` : `Pelayanan online ${noVal} tersimpan di perangkat (akan dikirim saat koneksi tersedia).`);
+    renderHadir(hadirLocal().map(normHadir));
+  });
+} // petugas memilih "Catat Tanpa Tiket"
 function renderHadir(all){
   const body = document.getElementById('modalBody');
   const today = isoDate(new Date());
@@ -1560,10 +1627,14 @@ function renderHadir(all){
     </form>`;
   }
   const list = todays.length ? `<table class="monitor-table hadir-today"><thead><tr><th>No. Antrian</th><th>Nama</th><th>Jenis Layanan</th><th>Status Pelayanan</th></tr></thead><tbody>
-      ${todays.map(r=>`<tr><td><b>${esc(r.noAntrian)}</b></td><td>${esc(r.nama)}</td><td>${esc(r.jenisLayanan)}</td><td>${r.status?esc(statusText(r)):'<span class="badge warn" style="margin:0">Sedang dilayani</span>'}</td></tr>`).join('')}
+      ${todays.map(r=>`<tr><td><b>${esc(r.noAntrian)}</b>${isOnline(r)?'<span class="badge-online">Online</span>':''}</td><td>${esc(r.nama)}</td><td>${esc(jenisTampil(r))}</td><td>${r.status?esc(statusText(r)):'<span class="badge warn" style="margin:0">Sedang dilayani</span>'}</td></tr>`).join('')}
     </tbody></table>` : `<p class="hadir-empty">Belum ada pemohon tercatat hari ini.</p>`;
-  body.innerHTML = `${offline}<div class="hadir-wrap"><div class="hadir-main"><div id="hadirCall"></div>${top}</div>
+  const seg = `<div class="hm-seg" role="tablist"><button type="button" data-m="off" class="${HADIR_ONLINE?'':'on'}">🏢 Pelayanan Offline (Meja PTSP)</button><button type="button" data-m="on" class="${HADIR_ONLINE?'on':''}">🌐 Pelayanan Online</button></div>`;
+  if(HADIR_ONLINE) top = onlineFormHTML(all);
+  body.innerHTML = `${offline}<div class="hadir-wrap"><div class="hadir-main">${seg}${HADIR_ONLINE?'':'<div id="hadirCall"></div>'}${top}</div>
     <div class="hadir-side"><div class="hadir-side-title">Pemohon Hari Ini · ${esc(tglSaja(today))} <span>${todays.length} orang</span></div>${list}</div></div>`;
+  body.querySelectorAll('.hm-seg button').forEach(b=>b.addEventListener('click', ()=>{ const on=b.dataset.m==='on'; if(on!==HADIR_ONLINE){ HADIR_ONLINE=on; renderHadir(hadirLocal().map(normHadir)); } }));
+  if(HADIR_ONLINE){ bindOnlineForm(); return; }
   renderHadirCall();
   if(pending.length) bindStatusForm(pending[0]);
   else if(mode==='kosong') document.getElementById('hManual').addEventListener('click', ()=>{ HADIR_MANUAL=true; renderHadir(hadirLocal().map(normHadir)); });
@@ -1670,13 +1741,15 @@ function bindRekap(){
     if(mode.value==='harian'){ const pt=petugasForDate(p.from, absen); petugasInfo=`<div class="rk-chip"><span>Petugas Piket</span><b>${esc(pt.names.join(', ')||'-')}</b>${pt.fromAbsen?'':(pt.names.length?' <small>(sesuai jadwal — belum absen)</small>':'')}</div>`; }
     const summary = `<div class="rk-summary">
       <div class="rk-chip big"><span>Total Pemohon</span><b>${rows.length}</b></div>
+      <div class="rk-chip"><span>Offline (meja PTSP)</span><b>${rows.filter(r=>!isOnline(r)).length}</b></div>
+      <div class="rk-chip"><span>Online</span><b>${rows.filter(isOnline).length}</b></div>
       ${mode.value==='bulanan'?`<div class="rk-chip"><span>Hari Pelayanan</span><b>${days.size}</b></div>`:''}
       ${petugasInfo}
       ${Object.entries(bySt).filter(([k,v])=>v||k!=='Belum diisi').map(([k,v])=>`<div class="rk-chip"><span>${esc(k)}</span><b>${v}</b></div>`).join('')}
     </div>
     ${rows.length?`<div class="rk-jenis">${Object.entries(byJenis).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<span>${esc(k)} <b>${v}</b></span>`).join('')}</div>`:''}`;
     const table = rows.length ? `<div class="rk-scroll"><table class="monitor-table rk-table"><thead><tr><th>No</th><th>Hari, Tanggal</th><th>No. Antrian</th><th>Nama</th><th>Alamat</th><th>No. WA</th><th>Email</th><th>Jenis Layanan</th><th>Keperluan</th><th>Status Pelayanan</th><th>Petugas Piket</th></tr></thead><tbody>
-      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(tglPanjang(r.tanggal))}</td><td><b>${esc(r.noAntrian)}</b></td><td>${esc(r.nama)}</td><td>${esc(r.alamat)}</td><td>${esc(r.wa)}</td><td>${esc(r.email||'-')}</td><td>${esc(r.jenisLayanan)}</td><td>${esc(r.keperluan)}</td><td>${r.status?esc(statusText(r)):'<span class="badge warn" style="margin:0">Belum diisi</span>'}</td><td>${esc(r.petugas)}</td></tr>`).join('')}
+      ${rows.map((r,i)=>`<tr><td>${i+1}</td><td>${esc(tglPanjang(r.tanggal))}</td><td><b>${esc(r.noAntrian)}</b></td><td>${esc(r.nama)}</td><td>${esc(r.alamat)}</td><td>${esc(r.wa)}</td><td>${esc(r.email||'-')}</td><td>${esc(jenisTampil(r))}</td><td>${esc(r.keperluan)}</td><td>${r.status?esc(statusText(r)):'<span class="badge warn" style="margin:0">Belum diisi</span>'}</td><td>${esc(r.petugas)}</td></tr>`).join('')}
     </tbody></table></div>` : `<p class="hadir-empty">Tidak ada data daftar hadir pada periode ini.</p>`;
     wrap.innerHTML = `<div class="rk-title">Rekap Daftar Hadir Pemohon · ${esc(p.label)}</div>${summary}${table}`;
   }
@@ -1689,7 +1762,7 @@ function bindRekap(){
       toast('Menyiapkan file Excel...');
       await loadScript(LIB_XLSX);
       const head=['No','Hari','Tanggal','No. Antrian','Nama Lengkap','Alamat','No. WhatsApp','Email','Jenis Layanan','Keperluan','Status Pelayanan','Keterangan','Jam Datang','Jam Selesai','Petugas Piket'];
-      const data=cache.rows.map((r,i)=>[i+1, HARI_ID[isoToDate(r.tanggal).getDay()], tglSaja(r.tanggal), r.noAntrian, r.nama, r.alamat, r.wa, r.email, r.jenisLayanan, r.keperluan, r.status||'Belum diisi', r.keterangan||'', r.waktuDaftar||'', r.waktuSelesai||'', r.petugas]);
+      const data=cache.rows.map((r,i)=>[i+1, HARI_ID[isoToDate(r.tanggal).getDay()], tglSaja(r.tanggal), r.noAntrian, r.nama, r.alamat, r.wa, r.email, jenisTampil(r), r.keperluan, r.status||'Belum diisi', r.keterangan||'', r.waktuDaftar||'', r.waktuSelesai||'', r.petugas]);
       const ws=XLSX.utils.aoa_to_sheet([['REKAP DAFTAR HADIR PEMOHON / PENERIMA LAYANAN'],['PELAYANAN TERINTEGRASI SATU PINTU'],['KOMISI PEMILIHAN UMUM KABUPATEN PACITAN'],[cache.p.label],[],head,...data]);
       ws['!cols']=[4,9,16,10,24,30,15,24,34,40,22,24,9,9,36].map(w=>({wch:w}));
       ws['!merges']=[0,1,2,3].map(r=>({s:{r,c:0},e:{r,c:head.length-1}}));
@@ -1703,7 +1776,7 @@ function bindRekap(){
     const html = `${kopHTML('REKAP DAFTAR HADIR PEMOHON / PENERIMA LAYANAN')}
       <p style="margin:0 0 8px;font-weight:700;">${esc(cache.p.label)} &nbsp;·&nbsp; Total pemohon: ${r.length}</p>
       <table class="lp-table"><thead><tr><th>No</th><th>Hari, Tanggal</th><th>No. Antrian</th><th>Nama</th><th>Alamat</th><th>No. WA</th><th>Email</th><th>Jenis Layanan</th><th>Keperluan</th><th>Status</th><th>Petugas Piket</th></tr></thead><tbody>
-      ${r.length? r.map((x,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(tglPanjang(x.tanggal))}</td><td style="text-align:center">${esc(x.noAntrian)}</td><td>${esc(x.nama)}</td><td>${esc(x.alamat)}</td><td>${esc(x.wa)}</td><td>${esc(x.email||'-')}</td><td>${esc(x.jenisLayanan)}</td><td>${esc(x.keperluan)}</td><td>${esc(x.status?statusText(x):'Belum diisi')}</td><td>${esc(x.petugas)}</td></tr>`).join('') : '<tr><td colspan="11" style="text-align:center">Tidak ada data.</td></tr>'}
+      ${r.length? r.map((x,i)=>`<tr><td style="text-align:center">${i+1}</td><td>${esc(tglPanjang(x.tanggal))}</td><td style="text-align:center">${esc(x.noAntrian)}</td><td>${esc(x.nama)}</td><td>${esc(x.alamat)}</td><td>${esc(x.wa)}</td><td>${esc(x.email||'-')}</td><td>${esc(jenisTampil(x))}</td><td>${esc(x.keperluan)}</td><td>${esc(x.status?statusText(x):'Belum diisi')}</td><td>${esc(x.petugas)}</td></tr>`).join('') : '<tr><td colspan="11" style="text-align:center">Tidak ada data.</td></tr>'}
       </tbody></table>`;
     printReport(html, 'A4 landscape', 'font-size:9.5pt');
   });
@@ -1745,7 +1818,7 @@ function laporanData(iso){
   const d = window.__monData || {all:[], hadir:[]};
   const pt = petugasForDate(iso, d.all);
   const dt = isoToDate(iso);
-  const rows = d.hadir.filter(r=>r.tanggal===iso).sort((a,b)=>(parseInt(a.noAntrian,10)||0)-(parseInt(b.noAntrian,10)||0));
+  const rows = d.hadir.filter(r=>r.tanggal===iso).sort((a,b)=>urutNo(a)-urutNo(b));
   const cnt = {'Selesai':0,'Sedang dalam proses PPID':0,'Lainnya':0,'Belum diisi':0};
   rows.forEach(r=>{ cnt[r.status||'Belum diisi']++; });
   return { iso, hari: HARI_ID[dt.getDay()], tanggal: tglSaja(iso), shift: (dt.getDay()>=1&&dt.getDay()<=5) ? getShiftForDate(dt) : '-',
@@ -1766,6 +1839,8 @@ function laporanHTML(L){
   <h4>A. Rekapitulasi Pelayanan</h4>
   <table class="lp-table" style="width:auto;min-width:60%"><tbody>
     <tr><td>Jumlah pemohon / penerima layanan</td><td style="text-align:center;width:70px"><b>${L.rows.length}</b></td></tr>
+    <tr><td>&nbsp;&nbsp;– Pelayanan offline (meja PTSP)</td><td style="text-align:center">${L.rows.filter(r=>!isOnline(r)).length}</td></tr>
+    <tr><td>&nbsp;&nbsp;– Pelayanan online</td><td style="text-align:center">${L.rows.filter(isOnline).length}</td></tr>
     <tr><td>Status: Selesai</td><td style="text-align:center">${L.cnt['Selesai']}</td></tr>
     <tr><td>Status: Sedang dalam proses PPID</td><td style="text-align:center">${L.cnt['Sedang dalam proses PPID']}</td></tr>
     <tr><td>Status: Lainnya</td><td style="text-align:center">${L.cnt['Lainnya']}</td></tr>
@@ -1773,7 +1848,7 @@ function laporanHTML(L){
   </tbody></table>
   <h4>B. Daftar Pelayanan</h4>
   <table class="lp-table"><thead><tr><th style="width:36px">No</th><th style="width:70px">No. Antrian</th><th>Jenis Layanan</th><th>Keperluan</th><th style="width:150px">Status Layanan</th></tr></thead><tbody>
-    ${L.rows.length ? L.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(r.noAntrian)}</td><td>${esc(r.jenisLayanan)}</td><td>${esc(r.keperluan)}</td><td>${esc(r.status?statusText(r):'Belum diisi')}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;font-style:italic">Tidak ada pemohon layanan pada hari ini.</td></tr>'}
+    ${L.rows.length ? L.rows.map((r,i)=>`<tr><td style="text-align:center">${i+1}</td><td style="text-align:center">${esc(r.noAntrian)}</td><td>${esc(jenisTampil(r))}</td><td>${esc(r.keperluan)}</td><td>${esc(r.status?statusText(r):'Belum diisi')}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center;font-style:italic">Tidak ada pemohon layanan pada hari ini.</td></tr>'}
   </tbody></table>
   <div style="text-align:center;margin-top:34px;">Pacitan, ${esc(L.tanggal)}</div>
   <div class="lp-ttd">${sig.map((n,i)=>`<div><div>Petugas Piket ${i+1}</div><div class="sp"></div><div class="nm">${n?esc(n):'(.................................)'}</div></div>`).join('')}</div>`;
@@ -1832,7 +1907,7 @@ async function downloadLaporanWord(iso){
       new D.TableCell({borders:noB, width:DX(300), children:[P(T(':'))]}),
       new D.TableCell({borders:noB, width:DX(6806), children: String(v).split('\n').map(line=>P(T(line), /^\d+\.\s/.test(line)?{indent:{left:300, hanging:300}}:{}))}) ]})) });
     const H = t => P(T(t,{bold:true}),{spacing:{before:200, after:100}});
-    const rekapRows = [['Jumlah pemohon / penerima layanan', L.rows.length, true],['Status: Selesai', L.cnt['Selesai']],['Status: Sedang dalam proses PPID', L.cnt['Sedang dalam proses PPID']],['Status: Lainnya', L.cnt['Lainnya']]];
+    const rekapRows = [['Jumlah pemohon / penerima layanan', L.rows.length, true],['   – Pelayanan offline (meja PTSP)', L.rows.filter(r=>!isOnline(r)).length],['   – Pelayanan online', L.rows.filter(isOnline).length],['Status: Selesai', L.cnt['Selesai']],['Status: Sedang dalam proses PPID', L.cnt['Sedang dalam proses PPID']],['Status: Lainnya', L.cnt['Lainnya']]];
     if(L.cnt['Belum diisi']) rekapRows.push(['Status belum diisi', L.cnt['Belum diisi']]);
     const rekap = new D.Table({ width:DX(6240), columnWidths:[5000,1240], layout:FIX, rows: rekapRows.map(([k,v,b])=> new D.TableRow({children:[
       cell(k,{width:DX(5000)}), cell(P(T(v,{bold:!!b}),{alignment:D.AlignmentType.CENTER}),{width:DX(1240)}) ]})) });
@@ -1841,7 +1916,7 @@ async function downloadLaporanWord(iso){
     const th = (t,i) => cell(P(T(t,{bold:true}),{alignment:D.AlignmentType.CENTER}),{shading:thShade, width:DX(COLS[i])});
     const td = (c,i) => cell(c,{width:DX(COLS[i])});
     const center = t => P(T(t),{alignment:D.AlignmentType.CENTER});
-    const dataRows = L.rows.length ? L.rows.map((r,i)=> new D.TableRow({children:[ td(center(i+1),0), td(center(r.noAntrian),1), td(r.jenisLayanan,2), td(r.keperluan,3), td(r.status?statusText(r):'Belum diisi',4) ]}))
+    const dataRows = L.rows.length ? L.rows.map((r,i)=> new D.TableRow({children:[ td(center(i+1),0), td(center(r.noAntrian),1), td(jenisTampil(r),2), td(r.keperluan,3), td(r.status?statusText(r):'Belum diisi',4) ]}))
       : [ new D.TableRow({children:[ cell(P(T('Tidak ada pemohon layanan pada hari ini.',{italics:true}),{alignment:D.AlignmentType.CENTER}),{columnSpan:5, width:DX(9606)}) ]}) ];
     const daftar = new D.Table({ width:DX(9606), columnWidths:COLS, layout:FIX, rows:[ new D.TableRow({tableHeader:true, children:[th('No',0),th('No. Antrian',1),th('Jenis Layanan',2),th('Keperluan',3),th('Status Layanan',4)]}), ...dataRows ]});
     const sig = (L.names.length?L.names:['','']).slice(0,2); while(sig.length<2) sig.push('');
@@ -1862,7 +1937,7 @@ async function downloadLaporanWord(iso){
 }
 function outputPiketText(rows){
   if(!rows.length) return 'Tidak ada pemohon/penerima layanan pada hari ini.';
-  return `Melayani ${rows.length} pemohon/penerima layanan:\n` + rows.map((r,i)=>`${i+1}. No. Antrian ${r.noAntrian} – ${r.jenisLayanan}: ${r.keperluan} (Status: ${r.status?statusText(r):'belum diisi'})`).join('\n');
+  return `Melayani ${rows.length} pemohon/penerima layanan:\n` + rows.map((r,i)=>`${i+1}. No. ${r.noAntrian} – ${jenisTampil(r)}: ${r.keperluan} (Status: ${r.status?statusText(r):'belum diisi'})`).join('\n');
 }
 /* ---------- Pengingat absensi pukul 16.00 ---------- */
 CONFIG.ABSEN_REMINDER = '16:00';
