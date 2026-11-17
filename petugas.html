@@ -369,7 +369,7 @@ function absenFormHTML(){
   const now = new Date();
   const todayISO = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
   return `<form class="absen" id="absenForm">
-    <div><label>Tanggal Piket</label><div class="date-row"><input type="date" id="fTanggal" value="${todayISO}" required><button type="button" class="date-btn" id="datePickBtn">📅 Pilih Tanggal</button></div></div>
+    <div><label>Tanggal Piket</label><div class="date-row"><input type="date" id="fTanggal" value="${todayISO}" max="${todayISO}" required><button type="button" class="date-btn" id="datePickBtn">📅 Pilih Tanggal</button></div></div>
     <div id="petugasBox" class="petugas-box" style="display:none">
       <div class="petugas-meta"><span id="metaShift"></span> &middot; <span id="metaHari"></span></div>
       <label>Petugas Piket Sesuai Jadwal</label>
@@ -383,8 +383,19 @@ function absenFormHTML(){
       <div><label>Waktu Selesai</label><input type="time" id="fSelesai" value="16:00" required></div>
     </div>
     <div><label>Output / Hasil Piket</label><textarea id="fOutput" required placeholder="Terisi otomatis dari Daftar Hadir Pemohon pada tanggal piket (bisa diedit)..."></textarea><div class="hadir-note" id="fOutputNote" style="margin-top:4px">Terisi otomatis dari hasil layanan Daftar Hadir Pemohon. Boleh ditambah/diedit.</div></div>
+    <div id="absenLock" class="ganti-note hidden" style="font-size:13px;background:#fff4e5;border:1px solid #f3cf9a;color:#8a4b00;border-radius:10px;padding:9px 12px;margin-top:0"></div>
     <button type="submit" class="submit-btn" id="submitBtn">Kirim Laporan Absensi</button>
   </form>`;
+}
+// Absensi untuk tanggal D baru boleh dikirim mulai D pukul 16.00 (akhir jam piket); tanggal mendatang ditolak.
+function absenBolehKirim(iso){
+  if(!iso) return {ok:false, pesan:'Pilih tanggal piket terlebih dahulu.'};
+  const [jj,mm] = String(CONFIG.ABSEN_REMINDER||'16:00').split(':').map(Number);
+  const [y,m,d] = iso.split('-').map(Number);
+  const buka = new Date(y, m-1, d, jj||16, mm||0, 0), now = new Date();
+  if(iso > isoDate(now)) return {ok:false, pesan:'⛔ Absensi tidak dapat diisi untuk tanggal yang akan datang.'};
+  if(now < buka) return {ok:false, pesan:`⏰ Absensi hari ini baru dapat dikirim mulai pukul ${String(jj).padStart(2,'0')}.${String(mm||0).padStart(2,'0')} WIB (setelah jam piket selesai).`};
+  return {ok:true, pesan:''};
 }
 function bindAbsenForm(){
   let ganti = false;
@@ -413,6 +424,17 @@ function bindAbsenForm(){
     n1.readOnly=true; n2.readOnly=true; ganti=false; gantiNote.classList.add('hidden');
   }
   tglInput.addEventListener('change', updatePetugas);
+  // kunci tombol kirim sesuai aturan tanggal & jam
+  const lockEl=document.getElementById('absenLock');
+  function cekKunci(){
+    const sb=document.getElementById('submitBtn'); if(!sb || !document.body.contains(sb)) return clearInterval(cekKunci._t);
+    tglInput.max = isoDate(new Date());
+    const v = absenBolehKirim(tglInput.value);
+    lockEl.textContent = v.pesan; lockEl.classList.toggle('hidden', v.ok);
+    if(!sb.querySelector('.spinner')){ sb.disabled = !v.ok; }
+  }
+  tglInput.addEventListener('change', cekKunci); tglInput.addEventListener('input', cekKunci);
+  cekKunci(); cekKunci._t = setInterval(cekKunci, 20000);
   const outEl = document.getElementById('fOutput');
   outEl.dataset.auto = '1';
   outEl.addEventListener('input', ()=>{ outEl.dataset.auto = '0'; });
@@ -435,6 +457,7 @@ function bindAbsenForm(){
   document.getElementById('absenForm').addEventListener('submit', async function(e){
     e.preventDefault();
     if(!currentShift || !currentHari){ toast('Pilih tanggal hari kerja (Senin–Jumat) terlebih dahulu.'); return; }
+    { const v = absenBolehKirim(tglInput.value); if(!v.ok){ toast(v.pesan.replace(/^\S+\s/,'')); cekKunci(); return; } }
     const submitBtn = document.getElementById('submitBtn');
     submitBtn.disabled = true;
     submitBtn.dataset.label = submitBtn.textContent;
